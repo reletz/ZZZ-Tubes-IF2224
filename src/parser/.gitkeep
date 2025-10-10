@@ -1,0 +1,9 @@
+# This file ensures the parser directory is tracked by git
+# Parser implementation will be added in Milestone 2
+
+# Planned files for Milestone 2:
+# - parser.py          # Main parser implementation
+# - grammar.py         # Pascal-S grammar rules
+# - ast_nodes.py       # Abstract Syntax Tree node definitions
+# - parse_tree.py      # Parse tree representation
+# - syntax_analyzer.py # Syntax analysis utilities

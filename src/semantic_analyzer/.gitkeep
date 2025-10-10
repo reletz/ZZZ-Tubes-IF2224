@@ -1,0 +1,9 @@
+# This file ensures the semantic_analyzer directory is tracked by git
+# Semantic analysis implementation will be added in Milestone 3
+
+# Planned files for Milestone 3:
+# - analyzer.py        # Main semantic analyzer
+# - symbol_table.py    # Symbol table implementation  
+# - type_checker.py    # Type checking utilities
+# - scope_manager.py   # Scope management
+# - error_handler.py   # Semantic error handling
