@@ -4,6 +4,8 @@ use std::process;
 
 mod lexer;
 
+use lexer::lexer::PascalLexer;
+
 fn main() {
     let args:Vec<String> = env::args().collect();
     if args.len() < 2{
@@ -22,4 +24,12 @@ fn main() {
     };
 
     println!("Source code:\n{}", source_code);
+
+    let mut lexer = PascalLexer::new(&source_code);
+
+    let tokens = lexer.get_all_tokens();
+
+    for token in tokens {
+        println!("{}", token);
+    }
 }
