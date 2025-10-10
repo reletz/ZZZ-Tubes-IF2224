@@ -2,7 +2,7 @@
 name = "pascal-s-compiler"
 version = "1.0.0"
 edition = "2021"
-authors = ["Kelompok [KODE]"]
+authors = ["Kelompok ZZZ"]
 description = "Pascal-S Compiler for IF2224 TBFO"
 
 [dependencies]
