@@ -150,6 +150,7 @@ impl<'a> PascalLexer<'a> {
             ',' => Token::new(TokenType::Comma, ",".to_string(), self.line, start_col),
             '[' => Token::new(TokenType::LBracket, "[".to_string(), self.line, start_col),
             ']' => Token::new(TokenType::RBracket, "]".to_string(), self.line, start_col),
+            '=' => Token::new(TokenType::RelationalOperator, "=".to_string(), self.line, start_col),
             ':' => {
                 if let Some('=') = self.chars.peek() {
                     self.advance();
@@ -164,6 +165,25 @@ impl<'a> PascalLexer<'a> {
                     Token::new(TokenType::RangeOperator, "..".to_string(), self.line, start_col)
                 } else {
                     Token::new(TokenType::Dot, ".".to_string(), self.line, start_col)
+                }
+            },
+            '<' => {
+                if let Some('=') = self.chars.peek() {
+                    self.advance();
+                    Token::new(TokenType::RelationalOperator, "<=".to_string(), self.line, start_col)
+                } else if let Some('>') = self.chars.peek() {
+                    self.advance();
+                    Token::new(TokenType::RelationalOperator, "<>".to_string(), self.line, start_col)
+                } else {
+                    Token::new(TokenType::RelationalOperator, "<".to_string(), self.line, start_col)
+                }
+            },
+            '>' => {
+                if let Some('=') = self.chars.peek() {
+                    self.advance();
+                    Token::new(TokenType::RelationalOperator, ">=".to_string(), self.line, start_col)
+                } else {
+                    Token::new(TokenType::RelationalOperator, ">".to_string(), self.line, start_col)
                 }
             },
 
