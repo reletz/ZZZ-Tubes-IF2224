@@ -97,6 +97,31 @@ impl<'a> PascalLexer<'a> {
         Token::new(TokenType::IntegerLiteral, value, self.line, start_col)
     }
 
+    fn read_string(&mut self, start_col: usize) -> Token {
+        let mut value = String::new();
+
+        loop {
+            match self.advance() {
+                Some('\'') => {
+                    if let Some('\'') = self.chars.peek() {
+                        self.advance();
+                        value.push('\'');
+                    } else {
+                        break;
+                    }
+                }
+                Some(c) => {
+                    value.push(c);
+                }
+                None => {
+                    break;
+                }
+            }
+        }
+
+        Token::new(TokenType::StringLiteral, value, self.line, start_col)
+    }
+
     // Fungsi untuk mendapatkan token berikutnya
     fn next_token(&mut self) -> Option<Token> {
         while let Some(&c) = self.chars.peek(){
@@ -116,10 +141,15 @@ impl<'a> PascalLexer<'a> {
 
         let token = match start_char {
             ';' => Token::new(TokenType::Semicolon, ";".to_string(), self.line, start_col),
-            '.' => Token::new(TokenType::Dot, ".".to_string(), self.line, start_col),
             '+' => Token::new(TokenType::ArithmeticOperator, "+".to_string(), self.line, start_col),
+            '-' => Token::new(TokenType::ArithmeticOperator, "-".to_string(), self.line, start_col),
+            '*' => Token::new(TokenType::ArithmeticOperator, "*".to_string(), self.line, start_col),
+            '/' => Token::new(TokenType::ArithmeticOperator, "/".to_string(), self.line, start_col),
             '(' => Token::new(TokenType::LParenthesis, "(".to_string(), self.line, start_col),
             ')' => Token::new(TokenType::RParenthesis, ")".to_string(), self.line, start_col),
+            ',' => Token::new(TokenType::Comma, ",".to_string(), self.line, start_col),
+            '[' => Token::new(TokenType::LBracket, "[".to_string(), self.line, start_col),
+            ']' => Token::new(TokenType::RBracket, "]".to_string(), self.line, start_col),
             ':' => {
                 if let Some('=') = self.chars.peek() {
                     self.advance();
@@ -128,7 +158,17 @@ impl<'a> PascalLexer<'a> {
                     Token::new(TokenType::Colon, ":".to_string(), self.line, start_col)
                 }
             },
+            '.' => {
+                if let Some('.') = self.chars.peek(){
+                    self.advance();
+                    Token::new(TokenType::RangeOperator, "..".to_string(), self.line, start_col)
+                } else {
+                    Token::new(TokenType::Dot, ".".to_string(), self.line, start_col)
+                }
+            },
 
+            
+            '\'' => self.read_string(start_col),
             c if c.is_alphabetic() => self.read_identifier_or_keyword(c, start_col),
             c if c.is_digit(10) => self.read_number(c, start_col),
 
