@@ -1,7 +1,6 @@
 use crate::lexer::token_types::{Token, TokenType};
 
 pub struct PascalLexer<'a> {
-    source: &'a str,                                    // String yang diproses
     chars: std::iter::Peekable<std::str::Chars<'a>>,    // Char sekarang (yang udah jadi iterator)
     current_pos: usize,                                 // Pointer ke char di string
     line: usize,
@@ -11,7 +10,6 @@ pub struct PascalLexer<'a> {
 impl<'a> PascalLexer<'a> {
     pub fn new(source: &'a str) -> Self {
         PascalLexer {
-            source,
             chars: source.chars().peekable(),
             current_pos: 0,
             line: 1,

@@ -40,8 +40,6 @@ pub enum TokenType {
     
     // Special tokens
     Eof,
-    Whitespace,
-    Newline,
     Unknown,
 }
 
@@ -71,8 +69,6 @@ impl fmt::Display for TokenType {
             TokenType::CommentStart => write!(f, "COMMENT_START"),
             TokenType::CommentEnd => write!(f, "COMMENT_END"),
             TokenType::Eof => write!(f, "EOF"),
-            TokenType::Whitespace => write!(f, "WHITESPACE"),
-            TokenType::Newline => write!(f, "NEWLINE"),
             TokenType::Unknown => write!(f, "UNKNOWN"),
         }
     }
@@ -166,30 +162,4 @@ lazy_static::lazy_static! {
 // Helper functions
 pub fn is_keyword(word: &str) -> bool {
     KEYWORDS.contains(&word.to_lowercase().as_str())
-}
-
-pub fn is_arithmetic_operator(word: &str) -> bool {
-    ARITHMETIC_OPERATORS.contains(&word)
-}
-
-pub fn is_relational_operator(word: &str) -> bool {
-    RELATIONAL_OPERATORS.contains(&word)
-}
-
-pub fn is_logical_operator(word: &str) -> bool {
-    LOGICAL_OPERATORS.contains(&word.to_lowercase().as_str())
-}
-
-pub fn get_single_char_token_type(ch: char) -> Option<TokenType> {
-    match ch {
-        ';' => Some(TokenType::Semicolon),
-        ',' => Some(TokenType::Comma),
-        ':' => Some(TokenType::Colon),
-        '.' => Some(TokenType::Dot),
-        '(' => Some(TokenType::LParenthesis),
-        ')' => Some(TokenType::RParenthesis),
-        '[' => Some(TokenType::LBracket),
-        ']' => Some(TokenType::RBracket),
-        _ => None,
-    }
 }
