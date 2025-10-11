@@ -1,0 +1,127 @@
+{
+  "start_state": "START",
+  "states": {
+    "START": {
+      "transitions": [
+        { "input": "letter", "next_state": "IN_IDENTIFIER" },
+        { "input": "digit", "next_state": "IN_INTEGER" },
+        { "input": "'", "next_state": "IN_STRING" },
+        { "input": ";", "next_state": "SEMICOLON_FINAL" },
+        { "input": ",", "next_state": "COMMA_FINAL" },
+        { "input": ")", "next_state": "RPAREN_FINAL" },
+        { "input": "[", "next_state": "LBRACKET_FINAL" },
+        { "input": "]", "next_state": "RBRACKET_FINAL" },
+        { "input": "+", "next_state": "ARITHMETIC_OPERATOR_FINAL" },
+        { "input": "-", "next_state": "ARITHMETIC_OPERATOR_FINAL" },
+        { "input": "/", "next_state": "ARITHMETIC_OPERATOR_FINAL" },
+        { "input": "=", "next_state": "RELATIONAL_OPERATOR_FINAL" },
+        { "input": ":", "next_state": "COLON_STATE" },
+        { "input": ".", "next_state": "DOT_STATE" },
+        { "input": "<", "next_state": "LT_STATE" },
+        { "input": ">", "next_state": "GT_STATE" },
+        { "input": "{", "next_state": "COMMENT_START_BRACE_FINAL" },
+        { "input": "}", "next_state": "COMMENT_END_BRACE_FINAL" },
+        { "input": "(", "next_state": "LPAREN_STATE" },
+        { "input": "*", "next_state": "STAR_STATE" }
+      ]
+    },
+    "IN_IDENTIFIER": {
+      "is_final": true,
+      "token_type": "Identifier",
+      "transitions": [
+        { "input": "letter", "next_state": "IN_IDENTIFIER" },
+        { "input": "digit", "next_state": "IN_IDENTIFIER" }
+      ]
+    },
+    "IN_INTEGER": {
+      "is_final": true,
+      "token_type": "IntegerLiteral",
+      "transitions": [
+        { "input": "digit", "next_state": "IN_INTEGER" },
+        { "input": ".", "next_state": "AFTER_DOT" }
+      ]
+    },
+    "AFTER_DOT": {
+      "transitions": [
+        { "input": "digit", "next_state": "IN_REAL" }
+      ]
+    },
+    "IN_REAL": {
+      "is_final": true,
+      "token_type": "RealLiteral",
+      "transitions": [
+        { "input": "digit", "next_state": "IN_REAL" }
+      ]
+    },
+    "COLON_STATE": {
+      "is_final": true,
+      "token_type": "Colon",
+      "transitions": [
+        { "input": "=", "next_state": "ASSIGN_OPERATOR_FINAL" }
+      ]
+    },
+    "DOT_STATE": {
+      "is_final": true,
+      "token_type": "Dot",
+      "transitions": [
+        { "input": ".", "next_state": "RANGE_OPERATOR_FINAL" }
+      ]
+    },
+    "LT_STATE": {
+      "is_final": true,
+      "token_type": "RelationalOperator",
+      "transitions": [
+        { "input": "=", "next_state": "RELATIONAL_OPERATOR_FINAL" },
+        { "input": ">", "next_state": "RELATIONAL_OPERATOR_FINAL" }
+      ]
+    },
+    "GT_STATE": {
+      "is_final": true,
+      "token_type": "RelationalOperator",
+      "transitions": [
+        { "input": "=", "next_state": "RELATIONAL_OPERATOR_FINAL" }
+      ]
+    },
+    "LPAREN_STATE": {
+      "is_final": true,
+      "token_type": "LParenthesis",
+      "transitions": [
+        { "input": "*", "next_state": "COMMENT_START_PAREN_FINAL" }
+      ]
+    },
+    "STAR_STATE": {
+      "is_final": true,
+      "token_type": "ArithmeticOperator",
+      "transitions": [
+        { "input": ")", "next_state": "COMMENT_END_PAREN_FINAL" }
+      ]
+    },
+    "IN_STRING": {
+      "transitions": [
+        { "input": "'", "next_state": "STRING_END_FINAL" },
+        { "input": "any_other", "next_state": "IN_STRING" }
+      ]
+    },
+    "STRING_END_FINAL": {
+      "is_final": true,
+      "token_type": "StringLiteral",
+      "transitions": [
+        { "input": "'", "next_state": "IN_STRING" }
+      ]
+    },
+    "SEMICOLON_FINAL": { "is_final": true, "token_type": "Semicolon" },
+    "COMMA_FINAL": { "is_final": true, "token_type": "Comma" },
+    "RPAREN_FINAL": { "is_final": true, "token_type": "RParenthesis" },
+    "LBRACKET_FINAL": { "is_final": true, "token_type": "LBracket" },
+    "RBRACKET_FINAL": { "is_final": true, "token_type": "RBracket" },
+    "ARITHMETIC_OPERATOR_FINAL": { "is_final": true, "token_type": "ArithmeticOperator" },
+    "RELATIONAL_OPERATOR_FINAL": { "is_final": true, "token_type": "RelationalOperator" },
+    "ASSIGN_OPERATOR_FINAL": { "is_final": true, "token_type": "AssignOperator" },
+    "RANGE_OPERATOR_FINAL": { "is_final": true, "token_type": "RangeOperator" },
+    "COMMENT_START_BRACE_FINAL": { "is_final": true, "token_type": "CommentStart" },
+    "COMMENT_END_BRACE_FINAL": { "is_final": true, "token_type": "CommentEnd" },
+    "COMMENT_START_PAREN_FINAL": { "is_final": true, "token_type": "CommentStart" },
+    "COMMENT_END_PAREN_FINAL": { "is_final": true, "token_type": "CommentEnd" }
+  }
+}
+
