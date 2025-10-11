@@ -74,6 +74,25 @@ impl<'a> PascalLexer<'a> {
                 break;
             }
         }
+        
+        if let Some('.') = self.chars.peek(){
+            let mut temp = self.chars.clone();
+            temp.next();
+
+            if let Some(char_after_dot) = temp.peek(){
+                if char_after_dot.is_digit(10){
+                    value.push(self.advance().unwrap());
+
+                    while let Some(&next_c) = self.chars.peek(){
+                        if next_c.is_digit(10) {
+                            value.push(self.advance().unwrap());
+                        } else {
+                            break;
+                        }
+                    } return Token::new(TokenType::RealLiteral, value, self.line, start_col);
+                }
+            }
+        }
 
         Token::new(TokenType::IntegerLiteral, value, self.line, start_col)
     }
@@ -110,25 +129,7 @@ impl<'a> PascalLexer<'a> {
                 }
             },
 
-            c if c.is_alphabetic() => {
-                let mut value = String::new();
-                value.push(c); 
-                while let Some(&next_c) = self.chars.peek() {
-                    if next_c.is_alphanumeric() {
-                        value.push(self.advance().unwrap());
-                    } else {
-                        break;
-                    }
-                }
-                
-                if crate::lexer::token_types::is_keyword(&value) {
-                    Token::new(TokenType::Keyword, value, self.line, start_col)
-                } else {
-                    Token::new(TokenType::Identifier, value, self.line, start_col)
-                }
-            },
-
-            c if c.is_alphanumeric() => self.read_identifier_or_keyword(c, start_col),
+            c if c.is_alphabetic() => self.read_identifier_or_keyword(c, start_col),
             c if c.is_digit(10) => self.read_number(c, start_col),
 
             _ => Token::new(TokenType::Unknown, start_char.to_string(), self.line, start_col),

@@ -22,6 +22,7 @@ pub enum TokenType {
     CharLiteral,
     StringLiteral,
     IntegerLiteral,
+    RealLiteral,
     
     // Punctuation
     Semicolon,
@@ -58,6 +59,7 @@ impl fmt::Display for TokenType {
             TokenType::CharLiteral => write!(f, "CHAR_LITERAL"),
             TokenType::StringLiteral => write!(f, "STRING_LITERAL"),
             TokenType::IntegerLiteral => write!(f, "INT_LITERAL"),
+            TokenType::RealLiteral => write!(f, "REAL_LITERAL"),
             TokenType::Semicolon => write!(f, "SEMICOLON"),
             TokenType::Comma => write!(f, "COMMA"),
             TokenType::Colon => write!(f, "COLON"),
