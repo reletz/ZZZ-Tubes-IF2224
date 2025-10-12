@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -41,6 +40,35 @@ pub enum TokenType {
     // Special tokens
     Eof,
     Unknown,
+}
+
+impl TokenType {
+    pub fn from_string(s: &str) -> TokenType {
+        match s {
+            "Identifier" => TokenType::Identifier,
+            "IntegerLiteral" => TokenType::IntegerLiteral,
+            "RealLiteral" => TokenType::RealLiteral,
+            "StringLiteral" => TokenType::StringLiteral,
+            "CharLiteral" => TokenType::CharLiteral,
+            "Semicolon" => TokenType::Semicolon,
+            "Comma" => TokenType::Comma,
+            "LParenthesis" => TokenType::LParenthesis,
+            "RParenthesis" => TokenType::RParenthesis,
+            "LBracket" => TokenType::LBracket,
+            "RBracket" => TokenType::RBracket,
+            "ArithmeticOperator" => TokenType::ArithmeticOperator,
+            "RelationalOperator" => TokenType::RelationalOperator,
+            "LogicalOperator" => TokenType::LogicalOperator,
+            "AssignOperator" => TokenType::AssignOperator,
+            "RangeOperator" => TokenType::RangeOperator,
+            "Colon" => TokenType::Colon,
+            "Dot" => TokenType::Dot,
+            "Keyword" => TokenType::Keyword,
+            "CommentStart" => TokenType::CommentStart,
+            "CommentEnd" => TokenType::CommentEnd,
+            _ => TokenType::Unknown,
+        }
+    }
 }
 
 impl fmt::Display for TokenType {
@@ -97,69 +125,4 @@ impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}({})", self.token_type, self.value)
     }
-}
-
-// Pascal-S Keywords
-lazy_static::lazy_static! {
-    pub static ref KEYWORDS: HashSet<&'static str> = {
-        let mut set = HashSet::new();
-        set.insert("program");
-        set.insert("var");
-        set.insert("begin");
-        set.insert("end");
-        set.insert("if");
-        set.insert("then");
-        set.insert("else");
-        set.insert("while");
-        set.insert("do");
-        set.insert("for");
-        set.insert("to");
-        set.insert("downto");
-        set.insert("integer");
-        set.insert("real");
-        set.insert("boolean");
-        set.insert("char");
-        set.insert("array");
-        set.insert("of");
-        set.insert("procedure");
-        set.insert("function");
-        set.insert("const");
-        set.insert("type");
-        set
-    };
-    
-    pub static ref ARITHMETIC_OPERATORS: HashSet<&'static str> = {
-        let mut set = HashSet::new();
-        set.insert("+");
-        set.insert("-");
-        set.insert("*");
-        set.insert("/");
-        set.insert("div");
-        set.insert("mod");
-        set
-    };
-    
-    pub static ref RELATIONAL_OPERATORS: HashSet<&'static str> = {
-        let mut set = HashSet::new();
-        set.insert("=");
-        set.insert("<>");
-        set.insert("<");
-        set.insert("<=");
-        set.insert(">");
-        set.insert(">=");
-        set
-    };
-    
-    pub static ref LOGICAL_OPERATORS: HashSet<&'static str> = {
-        let mut set = HashSet::new();
-        set.insert("and");
-        set.insert("or");
-        set.insert("not");
-        set
-    };
-}
-
-// Helper functions
-pub fn is_keyword(word: &str) -> bool {
-    KEYWORDS.contains(&word.to_lowercase().as_str())
 }

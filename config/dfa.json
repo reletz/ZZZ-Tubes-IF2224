@@ -5,7 +5,7 @@
       "transitions": [
         { "input": "letter", "next_state": "IN_IDENTIFIER" },
         { "input": "digit", "next_state": "IN_INTEGER" },
-        { "input": "'", "next_state": "IN_STRING" },
+        { "input": "'", "next_state": "IN_QUOTE" },
         { "input": ";", "next_state": "SEMICOLON_FINAL" },
         { "input": ",", "next_state": "COMMA_FINAL" },
         { "input": ")", "next_state": "RPAREN_FINAL" },
@@ -15,14 +15,50 @@
         { "input": "-", "next_state": "ARITHMETIC_OPERATOR_FINAL" },
         { "input": "/", "next_state": "ARITHMETIC_OPERATOR_FINAL" },
         { "input": "=", "next_state": "RELATIONAL_OPERATOR_FINAL" },
+        { "input": "{", "next_state": "COMMENT_START_BRACE_FINAL" },
+        { "input": "}", "next_state": "COMMENT_END_BRACE_FINAL" },
         { "input": ":", "next_state": "COLON_STATE" },
         { "input": ".", "next_state": "DOT_STATE" },
         { "input": "<", "next_state": "LT_STATE" },
         { "input": ">", "next_state": "GT_STATE" },
-        { "input": "{", "next_state": "COMMENT_START_BRACE_FINAL" },
-        { "input": "}", "next_state": "COMMENT_END_BRACE_FINAL" },
         { "input": "(", "next_state": "LPAREN_STATE" },
         { "input": "*", "next_state": "STAR_STATE" }
+      ]
+    },
+    "IN_QUOTE": {
+      "transitions": [
+        { "input": "'", "next_state": "EMPTY_STRING_FINAL" },
+        { "input": "any_other", "next_state": "FIRST_CHAR" }
+      ]
+    },
+    "EMPTY_STRING_FINAL": {
+      "is_final": true,
+      "token_type": "StringLiteral"
+    }, 
+    "FIRST_CHAR": {
+      "transitions": [
+        { "input": "'", "next_state": "POSSIBLE_CHAR_END" },
+        { "input": "any_other", "next_state": "IN_STRING_MULTI" }
+      ]
+    },
+    "POSSIBLE_CHAR_END": {
+      "is_final": true,
+      "token_type": "CharLiteral",
+      "transitions": [
+        { "input": "'", "next_state": "IN_STRING_MULTI" }
+      ]
+    },
+    "IN_STRING_MULTI": {
+      "transitions": [
+        { "input": "'", "next_state": "POSSIBLE_STRING_END" },
+        { "input": "any_other", "next_state": "IN_STRING_MULTI" }
+      ]
+    },
+    "POSSIBLE_STRING_END": {
+      "is_final": true,
+      "token_type": "StringLiteral",
+      "transitions": [
+        { "input": "'", "next_state": "IN_STRING_MULTI" }
       ]
     },
     "IN_IDENTIFIER": {
@@ -30,7 +66,8 @@
       "token_type": "Identifier",
       "transitions": [
         { "input": "letter", "next_state": "IN_IDENTIFIER" },
-        { "input": "digit", "next_state": "IN_IDENTIFIER" }
+        { "input": "digit", "next_state": "IN_IDENTIFIER" },
+        { "input": "_", "next_state": "IN_IDENTIFIER" }
       ]
     },
     "IN_INTEGER": {
@@ -96,19 +133,6 @@
         { "input": ")", "next_state": "COMMENT_END_PAREN_FINAL" }
       ]
     },
-    "IN_STRING": {
-      "transitions": [
-        { "input": "'", "next_state": "STRING_END_FINAL" },
-        { "input": "any_other", "next_state": "IN_STRING" }
-      ]
-    },
-    "STRING_END_FINAL": {
-      "is_final": true,
-      "token_type": "StringLiteral",
-      "transitions": [
-        { "input": "'", "next_state": "IN_STRING" }
-      ]
-    },
     "SEMICOLON_FINAL": { "is_final": true, "token_type": "Semicolon" },
     "COMMA_FINAL": { "is_final": true, "token_type": "Comma" },
     "RPAREN_FINAL": { "is_final": true, "token_type": "RParenthesis" },
@@ -122,6 +146,35 @@
     "COMMENT_END_BRACE_FINAL": { "is_final": true, "token_type": "CommentEnd" },
     "COMMENT_START_PAREN_FINAL": { "is_final": true, "token_type": "CommentStart" },
     "COMMENT_END_PAREN_FINAL": { "is_final": true, "token_type": "CommentEnd" }
+  },
+
+  "reserved_words": {
+    "program": "Keyword",
+    "var": "Keyword",
+    "const": "Keyword",
+    "type": "Keyword",
+    "function": "Keyword",
+    "procedure": "Keyword",
+    "begin": "Keyword",
+    "end": "Keyword",
+    "if": "Keyword",
+    "then": "Keyword",
+    "else": "Keyword",
+    "while": "Keyword",
+    "do": "Keyword",
+    "for": "Keyword",
+    "to": "Keyword",
+    "downto": "Keyword",
+    "integer": "Keyword",
+    "real": "Keyword",
+    "boolean": "Keyword",
+    "char": "Keyword",
+    "array": "Keyword",
+    "of": "Keyword",
+    "div": "ArithmeticOperator",
+    "mod": "ArithmeticOperator",
+    "and": "LogicalOperator",
+    "or": "LogicalOperator",
+    "not": "LogicalOperator"
   }
 }
-
