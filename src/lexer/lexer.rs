@@ -7,6 +7,7 @@ pub struct PascalLexer<'a> {
     dfa: dfa::DfaConfig,
     line: usize,
     column: usize,
+    pending_token: Option<Token>,
 }
 
 impl<'a> PascalLexer<'a> {
@@ -20,6 +21,7 @@ impl<'a> PascalLexer<'a> {
             dfa: dfa_config,
             line: 1,
             column: 1,
+            pending_token: None,
         }
     }
 
@@ -109,7 +111,46 @@ impl<'a> PascalLexer<'a> {
         Token::new(TokenType::Unknown, unknown_char.to_string(), start_line, start_col)
     }
 
+    //
+    fn skip_comment_content_and_get_end(&mut self, lexeme: &str) -> Option<Token> {
+        if lexeme == "{" {
+            // skip sampe '}'
+            while let Some(ch) = self.advance() {
+                if ch == '}' {
+                    return Some(Token::new(
+                        TokenType::CommentEnd, 
+                        "}".to_string(), 
+                        self.line, 
+                        self.column - 1
+                    ));
+                }
+            }
+        } else if lexeme == "(*" {
+            // skip sampe '*)'
+            while let Some(ch) = self.advance() {
+                if ch == '*' {
+                    if let Some(&')') = self.chars.peek() {
+                        let end_line = self.line;
+                        let end_col = self.column;
+                        self.advance(); // ambil ')'
+                        return Some(Token::new(
+                            TokenType::CommentEnd, 
+                            "*)".to_string(), 
+                            end_line, 
+                            end_col
+                        ));
+                    }
+                }
+            }
+        }
+        None // unclosed comment
+    }
+
     fn next_token(&mut self) -> Option<Token> {
+        if let Some(token) = self.pending_token.take() {
+            return Some(token);
+        }
+
         self.skip_whitespace();
 
         if self.chars.peek().is_none() {
@@ -127,9 +168,20 @@ impl<'a> PascalLexer<'a> {
             let token_type = self.resolve_token_type(&final_state_name, &lexeme);
             
             self.consume_lexeme(&lexeme);
-            Some(Token::new(token_type, lexeme, start_line, start_col))
+            
+            if token_type == TokenType::CommentStart {
+                let comment_start_token = Token::new(token_type, lexeme.clone(), start_line, start_col);
+                
+                if let Some(comment_end_token) = self.skip_comment_content_and_get_end(&lexeme) {
+                    self.pending_token = Some(comment_end_token);
+                }
+                
+                return Some(comment_start_token);
+            }
+            
+            return Some(Token::new(token_type, lexeme, start_line, start_col));
         } else {
-            Some(self.create_unknown_token(start_line, start_col))
+            return Some(self.create_unknown_token(start_line, start_col));
         }
     }
 }
