@@ -25,13 +25,13 @@
     },
     "IN_QUOTE": {
       "transitions": [
-        { "input": "'", "next_state": "EMPTY_STRING_FINAL" },
+        { "input": "'", "next_state": "EMPTY_CHAR_FINAL" },
         { "input": "any_other", "next_state": "FIRST_CHAR" }
       ]
     },
-    "EMPTY_STRING_FINAL": {
+    "EMPTY_CHAR_FINAL": {
       "is_final": true,
-      "token_type": "StringLiteral"
+      "token_type": "CharLiteral"
     }, 
     "FIRST_CHAR": {
       "transitions": [

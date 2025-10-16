@@ -3,6 +3,7 @@ program TestLexer;
 const
   MAX_SIZE = 100;
   PI = 3.14159;
+  EMPTY = '';
 
 type
   intArray = array [1..MAX_SIZE] of integer;
@@ -19,7 +20,7 @@ begin
   if a > b then
     writeln('a is greater')
   else
-    writeln('b is greater or equal');
+    writeln('b is greater ''or'' equal');
 end;
 
 function Calculate(x, y: real): real;
