@@ -14,15 +14,13 @@
         { "input": "+", "next_state": "ARITHMETIC_OPERATOR_FINAL" },
         { "input": "-", "next_state": "ARITHMETIC_OPERATOR_FINAL" },
         { "input": "/", "next_state": "ARITHMETIC_OPERATOR_FINAL" },
+        { "input": "*", "next_state": "ARITHMETIC_OPERATOR_FINAL" },
         { "input": "=", "next_state": "RELATIONAL_OPERATOR_FINAL" },
-        { "input": "{", "next_state": "COMMENT_START_BRACE_FINAL" },
-        { "input": "}", "next_state": "COMMENT_END_BRACE_FINAL" },
         { "input": ":", "next_state": "COLON_STATE" },
         { "input": ".", "next_state": "DOT_STATE" },
         { "input": "<", "next_state": "LT_STATE" },
         { "input": ">", "next_state": "GT_STATE" },
-        { "input": "(", "next_state": "LPAREN_STATE" },
-        { "input": "*", "next_state": "STAR_STATE" }
+        { "input": "(", "next_state": "LPAREN_STATE" }
       ]
     },
     "IN_QUOTE": {
@@ -121,17 +119,7 @@
     },
     "LPAREN_STATE": {
       "is_final": true,
-      "token_type": "LParenthesis",
-      "transitions": [
-        { "input": "*", "next_state": "COMMENT_START_PAREN_FINAL" }
-      ]
-    },
-    "STAR_STATE": {
-      "is_final": true,
-      "token_type": "ArithmeticOperator",
-      "transitions": [
-        { "input": ")", "next_state": "COMMENT_END_PAREN_FINAL" }
-      ]
+      "token_type": "LParenthesis"
     },
     "SEMICOLON_FINAL": { "is_final": true, "token_type": "Semicolon" },
     "COMMA_FINAL": { "is_final": true, "token_type": "Comma" },
@@ -141,11 +129,7 @@
     "ARITHMETIC_OPERATOR_FINAL": { "is_final": true, "token_type": "ArithmeticOperator" },
     "RELATIONAL_OPERATOR_FINAL": { "is_final": true, "token_type": "RelationalOperator" },
     "ASSIGN_OPERATOR_FINAL": { "is_final": true, "token_type": "AssignOperator" },
-    "RANGE_OPERATOR_FINAL": { "is_final": true, "token_type": "RangeOperator" },
-    "COMMENT_START_BRACE_FINAL": { "is_final": true, "token_type": "CommentStart" },
-    "COMMENT_END_BRACE_FINAL": { "is_final": true, "token_type": "CommentEnd" },
-    "COMMENT_START_PAREN_FINAL": { "is_final": true, "token_type": "CommentStart" },
-    "COMMENT_END_PAREN_FINAL": { "is_final": true, "token_type": "CommentEnd" }
+    "RANGE_OPERATOR_FINAL": { "is_final": true, "token_type": "RangeOperator" }
   },
 
   "reserved_words": {
