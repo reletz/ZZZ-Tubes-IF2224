@@ -73,7 +73,9 @@
       "token_type": "IntegerLiteral",
       "transitions": [
         { "input": "digit", "next_state": "IN_INTEGER" },
-        { "input": ".", "next_state": "AFTER_DOT" }
+        { "input": ".", "next_state": "AFTER_DOT" },
+        { "input": "e", "next_state": "AFTER_E"},
+        { "input": "E", "next_state": "AFTER_E" }
       ]
     },
     "AFTER_DOT": {
@@ -85,7 +87,28 @@
       "is_final": true,
       "token_type": "RealLiteral",
       "transitions": [
-        { "input": "digit", "next_state": "IN_REAL" }
+        { "input": "digit", "next_state": "IN_REAL" },
+        { "input": "e", "next_state": "AFTER_E"},
+        { "input": "E", "next_state": "AFTER_E" }
+      ]
+    },
+    "AFTER_E": {
+      "transitions": [
+        { "input": "+", "next_state": "AFTER_E_SIGN" },
+        { "input": "-", "next_state": "AFTER_E_SIGN" },
+        { "input": "digit", "next_state": "IN_EXPONENT" }
+      ]
+    },
+    "AFTER_E_SIGN": {
+      "transitions": [
+        { "input": "digit", "next_state": "IN_EXPONENT" }
+      ]
+    },
+    "IN_EXPONENT": {
+      "is_final": true,
+      "token_type": "ScientificLiteral",
+      "transitions": [
+        { "input": "digit", "next_state": "IN_EXPONENT" }
       ]
     },
     "COLON_STATE": {
