@@ -155,6 +155,8 @@
     "char": "Keyword",
     "array": "Keyword",
     "of": "Keyword",
+    "true": "Keyword",
+    "false": "Keyword",
     "div": "ArithmeticOperator",
     "mod": "ArithmeticOperator",
     "and": "LogicalOperator",
