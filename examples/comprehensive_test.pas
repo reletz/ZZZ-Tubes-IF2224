@@ -6,7 +6,7 @@ const
   EMPTY = '';
 
 type
-  intArray = array [1..MAX_SIZE] of integer;
+  intArray = array [123.45..MAX_SIZE] of integer;
 
 var
   x, y, z: integer;
