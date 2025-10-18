@@ -1,6 +1,7 @@
 # Pascal-S Compiler
 
 ## Identitas Kelompok
+
 - **Nama Kelompok**: JadiApaArtiHidup?
 - **Kode Kelompok**: ZZZ
 - **Anggota**:
@@ -11,9 +12,11 @@
   5. I Made Wiweka Putera - 13523160
 
 ## Deskripsi Program
-Compiler Pascal-S adalah implementasi compiler untuk subset bahasa Pascal yang dikembangkan sebagai tugas besar mata kuliah IF2224 Teori Bahasa Formal dan Otomata. 
+
+Compiler Pascal-S adalah implementasi compiler untuk subset bahasa Pascal yang dikembangkan sebagai tugas besar mata kuliah IF2224 Teori Bahasa Formal dan Otomata.
 
 Compiler ini terdiri dari beberapa tahapan:
+
 1. **Lexical Analysis (Lexer)** - Mengubah source code menjadi token
 2. **Syntax Analysis (Parser)** - ???
 3. **Semantic Analysis** - ???
@@ -21,10 +24,12 @@ Compiler ini terdiri dari beberapa tahapan:
 5. **Interpreter** - ???
 
 ## Requirements
+
 - Rust 1.70+ (with Cargo)
 - (Dependencies akan otomatis diinstall melalui Cargo)
 
 ## Cara Instalasi
+
 ```bash
 git clone https://github.com/username/ZZZ-Tubes-IF2224.git
 cd ZZZ-Tubes-IF2224
@@ -34,6 +39,7 @@ cargo build --release
 ## Cara Penggunaan Program
 
 ### Milestone 1 - Lexer
+
 ```bash
 cargo run -- program.pas
 # atau untuk development
@@ -41,17 +47,20 @@ cargo run --bin compiler -- input.pas
 ```
 
 ### Format Input
+
 File Pascal-S dengan ekstensi `.pas`
 
 ### Format Output
+
 List token dalam format `TOKEN_TYPE(value)`
 
 ## Struktur Project
+
 ```
 ├── src/                   # Source code utama (Rust)
 │   ├── main.rs            # Main entry point
 │   ├── lexer/             # Lexical analyzer
-│   ├── parser/            # Syntax analyzer  
+│   ├── parser/            # Syntax analyzer
 │   ├── semantic_analyzer/ # Semantic analyzer
 │   ├── code_generator/    # Code generator
 │   └── utils/             # Utility functions
@@ -67,23 +76,26 @@ List token dalam format `TOKEN_TYPE(value)`
 ```
 
 ## Pembagian Tugas
-| Nama | NIM | Tugas |
-|------|-----|-------|
-| Ahmad Syafiq | 13523135 | |
-| Frederiko Eldad Mugiyono | 13523147 | |
-| Naufarrel Zhafif Abhista | 13523149 | |
-| I Made Wiweka Putera | 13523156 | |
-| Hasri Fayadh Muqaffa | 13523160 | |
+
+| Nama                     | NIM      | Tugas |
+| ------------------------ | -------- | ----- |
+| Ahmad Syafiq             | 13523135 |       |
+| Frederiko Eldad Mugiyono | 13523147 |       |
+| Naufarrel Zhafif Abhista | 13523149 |       |
+| I Made Wiweka Putera     | 13523156 |       |
+| Hasri Fayadh Muqaffa     | 13523160 |       |
 
 ## Milestone Progress
+
 - [x] Project Structure Setup
 - [ ] **Milestone 1**: Lexer Implementation (Deadline: 19 Oktober 2025)
-- [ ] **Milestone 2**: Parser Implementation 
+- [ ] **Milestone 2**: Parser Implementation
 - [ ] **Milestone 3**: Semantic Analysis
 - [ ] **Milestone 4**: Intermediate Code Generation
 - [ ] **Milestone 5**: Interpreter
 
 ## Links
+
 - **Repository**: https://github.com/username/ZZZ-Tubes-IF2224
 - **Release**: https://github.com/username/ZZZ-Tubes-IF2224/releases
-- **DFA Diagram Workspace**: (belum ada hehe)
+- **DFA Diagram Workspace**: [doc/dfa_diagram.png](doc/dfa_diagram.png)

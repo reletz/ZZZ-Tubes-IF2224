@@ -20,7 +20,7 @@
         { "input": "<", "next_state": "LT_STATE" },
         { "input": ">", "next_state": "GT_STATE" },
         { "input": "(", "next_state": "LPAREN_STATE" },
-        { "input": "-", "next_state": "NEG_STATE" }
+        { "input": "-", "next_state": "ARITHMETIC_OPERATOR_FINAL" }
       ]
     },
     "IN_QUOTE": {
@@ -32,7 +32,7 @@
     "EMPTY_CHAR_FINAL": {
       "is_final": true,
       "token_type": "CharLiteral"
-    }, 
+    },
     "FIRST_CHAR": {
       "transitions": [
         { "input": "'", "next_state": "POSSIBLE_CHAR_END" },
@@ -42,9 +42,7 @@
     "POSSIBLE_CHAR_END": {
       "is_final": true,
       "token_type": "CharLiteral",
-      "transitions": [
-        { "input": "'", "next_state": "IN_STRING_MULTI" }
-      ]
+      "transitions": [{ "input": "'", "next_state": "IN_STRING_MULTI" }]
     },
     "IN_STRING_MULTI": {
       "transitions": [
@@ -55,9 +53,7 @@
     "POSSIBLE_STRING_END": {
       "is_final": true,
       "token_type": "StringLiteral",
-      "transitions": [
-        { "input": "'", "next_state": "IN_STRING_MULTI" }
-      ]
+      "transitions": [{ "input": "'", "next_state": "IN_STRING_MULTI" }]
     },
     "IN_IDENTIFIER": {
       "is_final": true,
@@ -74,21 +70,19 @@
       "transitions": [
         { "input": "digit", "next_state": "IN_INTEGER" },
         { "input": ".", "next_state": "AFTER_DOT" },
-        { "input": "e", "next_state": "AFTER_E"},
+        { "input": "e", "next_state": "AFTER_E" },
         { "input": "E", "next_state": "AFTER_E" }
       ]
     },
     "AFTER_DOT": {
-      "transitions": [
-        { "input": "digit", "next_state": "IN_REAL" }
-      ]
+      "transitions": [{ "input": "digit", "next_state": "IN_REAL" }]
     },
     "IN_REAL": {
       "is_final": true,
       "token_type": "RealLiteral",
       "transitions": [
         { "input": "digit", "next_state": "IN_REAL" },
-        { "input": "e", "next_state": "AFTER_E"},
+        { "input": "e", "next_state": "AFTER_E" },
         { "input": "E", "next_state": "AFTER_E" }
       ]
     },
@@ -100,30 +94,22 @@
       ]
     },
     "AFTER_E_SIGN": {
-      "transitions": [
-        { "input": "digit", "next_state": "IN_EXPONENT" }
-      ]
+      "transitions": [{ "input": "digit", "next_state": "IN_EXPONENT" }]
     },
     "IN_EXPONENT": {
       "is_final": true,
       "token_type": "RealLiteral",
-      "transitions": [
-        { "input": "digit", "next_state": "IN_EXPONENT" }
-      ]
+      "transitions": [{ "input": "digit", "next_state": "IN_EXPONENT" }]
     },
     "COLON_STATE": {
       "is_final": true,
       "token_type": "Colon",
-      "transitions": [
-        { "input": "=", "next_state": "ASSIGN_OPERATOR_FINAL" }
-      ]
+      "transitions": [{ "input": "=", "next_state": "ASSIGN_OPERATOR_FINAL" }]
     },
     "DOT_STATE": {
       "is_final": true,
       "token_type": "Dot",
-      "transitions": [
-        { "input": ".", "next_state": "RANGE_OPERATOR_FINAL" }
-      ]
+      "transitions": [{ "input": ".", "next_state": "RANGE_OPERATOR_FINAL" }]
     },
     "LT_STATE": {
       "is_final": true,
@@ -136,9 +122,7 @@
     "GT_STATE": {
       "is_final": true,
       "token_type": "RelationalOperator",
-      "transitions": [
-        { "input": "=", "next_state": "RELATIONAL_OPERATOR_FINAL" }
-      ]
+      "transitions": [{ "input": "=", "next_state": "RELATIONAL_OPERATOR_FINAL" }]
     },
     "LPAREN_STATE": {
       "is_final": true,
