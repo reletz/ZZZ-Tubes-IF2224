@@ -48,7 +48,6 @@ impl TokenType {
             "Identifier" => TokenType::Identifier,
             "IntegerLiteral" => TokenType::IntegerLiteral,
             "RealLiteral" => TokenType::RealLiteral,
-            "ScientificLiteral" => TokenType::RealLiteral,
             "StringLiteral" => TokenType::StringLiteral,
             "CharLiteral" => TokenType::CharLiteral,
             "Semicolon" => TokenType::Semicolon,

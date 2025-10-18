@@ -12,7 +12,6 @@
         { "input": "[", "next_state": "LBRACKET_FINAL" },
         { "input": "]", "next_state": "RBRACKET_FINAL" },
         { "input": "+", "next_state": "ARITHMETIC_OPERATOR_FINAL" },
-        { "input": "-", "next_state": "ARITHMETIC_OPERATOR_FINAL" },
         { "input": "/", "next_state": "ARITHMETIC_OPERATOR_FINAL" },
         { "input": "*", "next_state": "ARITHMETIC_OPERATOR_FINAL" },
         { "input": "=", "next_state": "RELATIONAL_OPERATOR_FINAL" },
@@ -20,7 +19,8 @@
         { "input": ".", "next_state": "DOT_STATE" },
         { "input": "<", "next_state": "LT_STATE" },
         { "input": ">", "next_state": "GT_STATE" },
-        { "input": "(", "next_state": "LPAREN_STATE" }
+        { "input": "(", "next_state": "LPAREN_STATE" },
+        { "input": "-", "next_state": "NEG_STATE" }
       ]
     },
     "IN_QUOTE": {
@@ -106,7 +106,7 @@
     },
     "IN_EXPONENT": {
       "is_final": true,
-      "token_type": "ScientificLiteral",
+      "token_type": "RealLiteral",
       "transitions": [
         { "input": "digit", "next_state": "IN_EXPONENT" }
       ]
