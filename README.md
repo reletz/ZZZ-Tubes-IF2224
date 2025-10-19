@@ -140,6 +140,6 @@ List token dalam format `TOKEN_TYPE(value)`
 
 ## Links
 
-- **Repository**: https://github.com/username/ZZZ-Tubes-IF2224
-- **Release**: https://github.com/username/ZZZ-Tubes-IF2224/releases
-- **DFA Diagram Workspace**: [doc/dfa_diagram.png](doc/dfa_diagram.png)
+- **Repository**: https://github.com/reletz/ZZZ-Tubes-IF2224
+- **Release**: https://github.com/reletz/ZZZ-Tubes-IF2224/releases
+- **DFA Diagram Workspace**: [doc/dfa_diagram.png](doc/Diagram-1-ZZZ.png)
