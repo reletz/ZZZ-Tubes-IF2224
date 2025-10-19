@@ -18,6 +18,29 @@ Compiler Pascal-S adalah implementasi compiler untuk subset bahasa Pascal yang d
 Compiler ini terdiri dari beberapa tahapan:
 
 1. **Lexical Analysis (Lexer)** - Mengubah source code menjadi token
+
+    Lexer diimplementasikan menggunakan Deterministic Finite Automata (DFA) dengan fitur:
+    - Tokenisasi keywords Pascal-S (program, var, begin, end, dll)
+    - Pengenalan identifier (variabel dan nama fungsi/prosedur)
+    - Operator aritmatika (+, -, *, /, div, mod)
+    - Operator relasional (=, <>, <, <=, >, >=)
+    - Operator boolean (and, or, not)
+    - Tipe data (integer, real, boolean, string)
+    - Literal konstanta (angka, string dalam quotes)
+    - Delimiter dan separator (, ; . () [])
+    - Penanganan whitespace dan komentar
+    - Error handling untuk karakter tidak valid
+
+    Token yang dihasilkan memiliki format:
+    ```
+    TOKEN_TYPE(value)
+    ```
+    Contoh:
+    ```
+    KEYWORD(program)
+    IDENTIFIER(main)
+    SEMICOLON(;)
+    ```
 2. **Syntax Analysis (Parser)** - ???
 3. **Semantic Analysis** - ???
 4. **Intermediate Code Generation** - ???
@@ -57,38 +80,59 @@ List token dalam format `TOKEN_TYPE(value)`
 ## Struktur Project
 
 ```
-├── src/                   # Source code utama (Rust)
-│   ├── main.rs            # Main entry point
+├── src/                    # Source code utama (Rust)
+│   ├── main.rs             # Main entry point
 │   ├── lexer/             # Lexical analyzer
-│   ├── parser/            # Syntax analyzer
-│   ├── semantic_analyzer/ # Semantic analyzer
-│   ├── code_generator/    # Code generator
-│   └── utils/             # Utility functions
-├── Cargo.toml             # Rust project configuration
-├── test/                  # Test cases
-│   ├── milestone-1/       # Test untuk lexer
-│   ├── milestone-2/       # Test untuk parser
-│   └── milestone-3/       # Test untuk semantic & codegen
-├── config/                # Configuration files
-├── doc/                   # Dokumentasi dan laporan
+│   │   ├── mod.rs         # Lexer module definition
+│   │   ├── lexer.rs       # Core lexer implementation
+│   │   ├── dfa.rs         # DFA state machine
+│   │   └── token_types.rs # Token type definitions
+│   ├── parser/            # Syntax analyzer (future)
+│   ├── semantic_analyzer/ # Semantic analyzer (future)
+│   ├── code_generator/    # Code generator (future)
+│   ├── interpreter/       # Interpreter (future)
+│   └── utils/            # Utility functions
 ├── examples/              # Contoh program Pascal-S
-└── scripts/               # Script helper
+│   ├── hello.pas         # Program "Hello World"
+│   ├── comment_test.pas  # Test case untuk komentar
+│   └── comprehensive_test.pas # Test case komprehensif
+├── test/                 # Test cases
+│   ├── integration/      # Integration tests
+│   ├── milestone-1/      # Lexer test cases
+│   │   ├── test1_simple.pas
+│   │   ├── test2_operators.pas
+│   │   ├── test3_strings_chars.pas
+│   │   ├── test4_comments.pas
+│   │   ├── test5_arrays_range.pas
+│   │   └── expected_output_hello.txt
+│   ├── milestone-2/      # Parser tests (future)
+│   ├── milestone-3/      # Semantic tests (future)
+│   ├── milestone-4/      # Code gen tests (future)
+│   └── milestone-5/      # Interpreter tests (future)
+├── config/               # Configuration files
+│   └── dfa.json         # DFA state transition table
+├── doc/                 # Documentation
+├── scripts/             # Utility scripts
+├── Cargo.toml           # Rust project & dependency config
+├── Cargo.lock           # Dependency lock file
+├── .gitignore          # Git ignore rules
+└── README.md           # Project documentation
 ```
 
 ## Pembagian Tugas
 
-| Nama                     | NIM      | Tugas |
-| ------------------------ | -------- | ----- |
-| Ahmad Syafiq             | 13523135 |       |
-| Frederiko Eldad Mugiyono | 13523147 |       |
-| Naufarrel Zhafif Abhista | 13523149 |       |
-| I Made Wiweka Putera     | 13523156 |       |
-| Hasri Fayadh Muqaffa     | 13523160 |       |
+| Nama                     | NIM      | Tugas                                           |
+| ------------------------ | -------- | ----------------------------------------------- |
+| Ahmad Syafiq             | 13523135 | README & License                                |
+| Frederiko Eldad Mugiyono | 13523147 | Test Case dan Pengujian                         |
+| Naufarrel Zhafif Abhista | 13523149 | Implementasi DFA (Kode dan Aturannya) dan Lexer |
+| I Made Wiweka Putera     | 13523156 | Diagram DFA                                     |
+| Hasri Fayadh Muqaffa     | 13523160 | Laporan                                         |
 
 ## Milestone Progress
 
 - [x] Project Structure Setup
-- [ ] **Milestone 1**: Lexer Implementation (Deadline: 19 Oktober 2025)
+- [x] **Milestone 1**: Lexer Implementation (Deadline: 19 Oktober 2025)
 - [ ] **Milestone 2**: Parser Implementation
 - [ ] **Milestone 3**: Semantic Analysis
 - [ ] **Milestone 4**: Intermediate Code Generation
