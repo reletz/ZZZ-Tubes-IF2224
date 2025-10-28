@@ -32,14 +32,14 @@ impl PascalParser {
     self.peek().token_type == TokenType::Eof
 	}
 
-	fn check(&self, token_type: TokenType) -> bool {
+	pub(super) fn check(&self, token_type: TokenType) -> bool {
     if self.is_at_end() {
       return false;
     }
     self.peek().token_type == token_type
 	}
 
-	fn match_token(&mut self, types: &[TokenType]) -> bool {
+	pub(super) fn match_token(&mut self, types: &[TokenType]) -> bool {
     for token_type in types {
 			if self.check(*token_type) {
 				self.advance();
@@ -49,19 +49,19 @@ impl PascalParser {
     false
 	}
 
-	fn error(&self, message: &str) -> SyntaxError {
+	pub(super) fn error(&self, message: &str) -> SyntaxError {
 		let token = self.peek();
 		SyntaxError::new(message.to_string(), token.line, token.column)
 	}
 
-	fn check_keyword(&self, value: &str) -> bool {
+	pub(super) fn check_keyword(&self, value: &str) -> bool {
 		if !self.check(TokenType::Keyword) {
 			return false;
 		}
 		self.peek().value.to_lowercase() == value
 	}
 
-  fn match_keyword(&mut self, values: &[&str]) -> bool {
+  pub(super) fn match_keyword(&mut self, values: &[&str]) -> bool {
 		for &value in values {
 			if self.check_keyword(value) {
 				self.advance();
@@ -70,7 +70,7 @@ impl PascalParser {
 		} false
   }
 
-	fn consume_keyword(&mut self, value: &str, message: &str) -> Result<&Token, SyntaxError> {
+	pub(super) fn consume_keyword(&mut self, value: &str, message: &str) -> Result<&Token, SyntaxError> {
 		if self.check_keyword(value) {
 			Ok(self.advance())
 		} else {
@@ -78,7 +78,7 @@ impl PascalParser {
 		}
 	}
 
-	fn consume_token(&mut self, token_type: TokenType, message: &str) -> Result<&Token, SyntaxError> {
+	pub fn consume_token(&mut self, token_type: TokenType, message: &str) -> Result<&Token, SyntaxError> {
 		if self.check(token_type) {
 			Ok(self.advance())
 		} else {
@@ -112,19 +112,5 @@ impl PascalParser {
 			declarations: declarations,
 			body: body,
 		})
-	}
-
-	fn parse_declaration_part(&mut self) -> Result<Vec<Declaration>, SyntaxError> {
-		// TODO: Implementasi parsing 'var', 'const', 'type'
-		// Ini akan looping selama token-nya 'var', 'const', 'type'
-		Ok(Vec::new())
-	}
-
-	fn parse_compound_statement(&mut self) -> Result<CompoundStatement, SyntaxError> {
-		// TODO: Implementasi parsing 'mulai' ... 'selesai'
-		// 1. consume 'mulai'
-		// 2. panggil parse_statement_list()
-		// 3. consume 'selesai'
-		Ok(CompoundStatement { statements: Vec::new() })
 	}
 }
