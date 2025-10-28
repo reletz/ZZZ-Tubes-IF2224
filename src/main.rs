@@ -6,6 +6,7 @@ mod lexer;
 mod parser;
 
 use lexer::lexer::PascalLexer;
+use parser::parser::PascalParser;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -27,7 +28,19 @@ fn main() {
     let mut lexer = PascalLexer::new(&source_code);
 
     let tokens = lexer.get_all_tokens();
-    for token in tokens {
-        println!("{}", token);
+    // for token in tokens {
+    //     println!("{}", token);
+    // }
+
+    let mut parser = PascalParser::new(tokens);
+    match parser.parse() {
+        Ok(ast_tree) => {
+            println!("Parsing Berhasil!");
+            println!("{:#?}", ast_tree); 
+        }
+        Err(e) => {
+            eprintln!("Parsing Gagal: {}", e);
+            process::exit(1);
+        }
     }
 }
