@@ -79,8 +79,10 @@ pub struct CompoundStatement {
 // 'variable := expression'
 #[derive(Debug)]
 pub struct AssignmentStatement {
-	pub variable: String, // Nama variabel di kiri
-	pub expression: Expression,
+  // Ini sekarang bisa menampung Expression::Variable("x")
+  // ATAU Expression::ArrayAccess(...)
+  pub variable: Expression, // Sisi kiri (L-Value)
+  pub expression: Expression, // Sisi kanan (R-Value)
 }
 
 // 'if condition then then_branch else else_branch'
@@ -120,7 +122,7 @@ pub enum ForDirection {
 // 'readln(var1, var2, ...)'
 #[derive(Debug)]
 pub struct ReadStatement {
-	pub variables: Vec<String>,
+	pub variables: Vec<Expression>,
 }
 
 // 'writeln(expr1, "hello", ...)'
@@ -151,6 +153,8 @@ pub enum Expression {
 	FunctionCall(FunctionCallExpression),
 	/// '(a + b)'
 	Grouped(Box<Expression>),
+
+	ArrayAccess(ArrayAccessExpression),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -182,6 +186,18 @@ pub struct UnaryExpression {
 pub struct FunctionCallExpression {
 	pub function_name: String,
 	pub arguments: Vec<Expression>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ArrayAccessExpression {
+  // Variabel array-nya. Ini bisa rekursif, misal: 'my2DArray[5][10]'
+  // akan di-parse sebagai:
+  // ArrayAccess(
+  //   array: Box(ArrayAccess(..)),
+  //   index: Box(Literal(10))
+  // )
+  pub array: Box<Expression>,
+  pub index: Box<Expression>,
 }
 
 // === OPERATOR ===
