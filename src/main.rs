@@ -3,6 +3,7 @@ use std::fs;
 use std::process;
 
 mod lexer;
+mod parser;
 
 use lexer::lexer::PascalLexer;
 
