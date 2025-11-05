@@ -1,10 +1,10 @@
 program ArraysAndRange;
-type
+tipe
   MyArray = array [1..10] of integer;
-var
+variabel
   arr: MyArray;
   i: integer;
-begin
-  for i := 1 to 10 do
+mulai
+  untuk i := 1 ke 10 lakukan
     arr[i] := i;
-end.
+selesai.

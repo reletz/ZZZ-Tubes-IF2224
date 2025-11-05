@@ -1,9 +1,9 @@
 program StringsAndChars;
-var
+variabel
   message: string;
   ch: char;
-begin
+mulai
   message := 'Hello World!';
   ch := 'A';
   writeln('Message: ', message, ' Character: ', ch);
-end.
+selesai.

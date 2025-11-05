@@ -1,3 +1,3 @@
 program Simple;
-begin
-end.
+mulai
+selesai.

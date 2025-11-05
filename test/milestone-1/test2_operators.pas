@@ -1,12 +1,12 @@
 program Operators;
-var x: integer;
-begin
-  x := 5 + 3 - 2 * 4 div 2 mod 3;
-  if x = 6 then
-    if x <> 7 then
-      if x < 10 then
-        if x <= 10 then
-          if x > 0 then
-            if x >= 0 then
+variabel x: integer;
+mulai
+  x := 5 + 3 - 2 * 4 bagi 2 mod 3;
+  jika x = 6 maka
+    jika x <> 7 maka
+      jika x < 10 maka
+        jika x <= 10 maka
+          jika x > 0 maka
+            jika x >= 0 maka
               writeln('All operators work');
-end.
+selesai.

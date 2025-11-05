@@ -106,7 +106,7 @@ impl PascalParser {
 		// 4. Parse DOT
 		self.consume_token(TokenType::Dot, "Mengharapkan '.' di akhir program.")?;
 
-		// 5. Selesai! Kembalikan AST Node.
+		// 5. Selesai. Kembalikan AST Node.
 		Ok(Program {
 			name: program_name,
 			declarations: declarations,
