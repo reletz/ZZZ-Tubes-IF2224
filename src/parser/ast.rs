@@ -68,6 +68,8 @@ pub enum Statement {
 	Write(WriteStatement),
 	/// 'MyProcedure(arg1, arg2)'
 	ProcedureCall(ProcedureCallStatement),
+	/// 'case expression of branch
+	/// TODO: finsih case and repeat statement
 	/// Statement kosong, misal karena ';;'
 	Empty,
 }

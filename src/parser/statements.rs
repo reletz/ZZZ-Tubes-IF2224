@@ -5,11 +5,11 @@ use super::error::SyntaxError;
 
 impl PascalParser {
 	/// compound-statement -> 'mulai' statement-list 'selesai'
-	pub(super) fn parse_compound_statement(&mut self) -> Result<CompoundStatement, SyntaxError> {
+	pub(super) fn parse_compound_statement(&mut self) -> Result<Statement, SyntaxError> {
 		self.consume_keyword("mulai", "Mengharapkan 'mulai' (begin).")?;
 		let statements = self.parse_statement_list()?;
 		self.consume_keyword("selesai", "Mengharapkan 'selesai' (end) untuk menutup blok 'mulai'.")?;
-		Ok(CompoundStatement { statements })
+		Ok(Statement::Compound(CompoundStatement { statements }))
 	}
 
     /// statement-list -> (statement (';' statement)* )?
@@ -69,9 +69,9 @@ impl PascalParser {
 		};
 
 		Ok(Statement::If(IfStatement {
-			condition,
-			then_branch, 
-			else_branch
+			condition: condition,
+			then_branch: then_branch, 
+			else_branch: else_branch
 		}))
 	}
 
@@ -82,10 +82,46 @@ impl PascalParser {
 		let body = Box::new(self.parse_statement()?);
 
 		Ok(Statement::While(WhileStatement {
-			condition,
-			body
+			condition: condition,
+			body: body
 		}))
 	}
 
-	fn 
+	fn parse_for_statement(&mut self) -> Result<Statement, SyntaxError> {
+		self.consume_keyword("untuk", "Expected 'untuk'.")?;
+		let counter = self.consume_token(TokenType::Identifier, "Expected control variable.")?.value.clone();
+		self.consume_token(TokenType::AssignOperator, "Expected ':=' inside for loop.")?;
+		let start = self.parse_expression()?;
+
+		let direction = if self.check_keyword("ke") {
+			self.advance();
+			ForDirection::To
+		} else if self.check_keyword("turun-ke") {
+			self.advance();
+			ForDirection::DownTo
+		} else {
+			return Err(self.error("Expected 'ke' or 'turun-ke' inside for loop."));
+		};
+
+		let end = self.parse_expression()?;
+		self.consume_keyword("lakukan", "Expected 'lakukan' inside for loop.")?;
+		
+		let body = Box::new(self.parse_statement()?);
+
+		Ok(Statement::For(ForStatement{
+			counter_variable: counter,
+			start_value: start,
+			end_value: end,
+			direction: direction,
+			body: body
+		}))
+	}
+
+	fn parse_repeat_statement(&mut self) -> Result<Statement, SyntaxError> {
+		//TODO: Implement this
+	}
+
+	fn parse_case_statement(&mut self) -> Result<Statement, SyntaxError> {
+		//TODO: implement this
+	}
 }
