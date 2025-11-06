@@ -12,7 +12,7 @@ impl PascalParser {
 		Ok(CompoundStatement { statements })
 	}
 
-  /// statement-list -> (statement (';' statement)* )?
+    /// statement-list -> (statement (';' statement)* )?
 	fn parse_statement_list(&mut self) -> Result<Vec<Statement>, SyntaxError> {
 		let mut statements = Vec::new();
 
@@ -37,7 +37,12 @@ impl PascalParser {
 		// TODO: Implementasi ini
 		// if self.check_keyword("jika") { self.parse_if_statement() } ...
 		
-		println!("Not implemented yet. Returned Empty.");
-		Ok(Statement::Empty)
-	}
+		// For now, treat any expression as a statement (incomplete, but works for testing)
+        if self.check(TokenType::Identifier) {
+            let expr = self.parse_expression()?;
+            return Ok(Statement::ExpressionStatement(expr));
+        }
+        
+        Err(self.error("Expected statement"))
+    }
 }

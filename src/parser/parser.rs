@@ -15,14 +15,18 @@ impl PascalParser {
 		}
 	}
 
-	fn peek(&self) -> &Token {
+	pub(super) fn peek(&self) -> &Token {
     if self.current >= self.tokens.len() {
       return &self.tokens[self.tokens.len() - 1]; // Harusnya token EOF
     }
     &self.tokens[self.current]
 	}
 
-	fn advance(&mut self) -> &Token {
+    pub(super) fn previous(&self) -> &Token {
+        &self.tokens[self.current - 1]
+    }
+
+	pub(super) fn advance(&mut self) -> &Token {
 		if !(self.is_at_end()) {
 			self.current += 1;
 		} &self.tokens[self.current - 1]

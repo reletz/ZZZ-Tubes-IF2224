@@ -19,29 +19,70 @@ Compiler ini terdiri dari beberapa tahapan:
 
 1. **Lexical Analysis (Lexer)** - Mengubah source code menjadi token
 
-    Lexer diimplementasikan menggunakan Deterministic Finite Automata (DFA) dengan fitur:
-    - Tokenisasi keywords Pascal-S (program, var, begin, end, dll)
-    - Pengenalan identifier (variabel dan nama fungsi/prosedur)
-    - Operator aritmatika (+, -, *, /, div, mod)
-    - Operator relasional (=, <>, <, <=, >, >=)
-    - Operator boolean (and, or, not)
-    - Tipe data (integer, real, boolean, string)
-    - Literal konstanta (angka, string dalam quotes)
-    - Delimiter dan separator (, ; . () [])
-    - Penanganan whitespace dan komentar
-    - Error handling untuk karakter tidak valid
+   Lexer diimplementasikan menggunakan Deterministic Finite Automata (DFA) dengan fitur:
 
-    Token yang dihasilkan memiliki format:
-    ```
-    TOKEN_TYPE(value)
-    ```
-    Contoh:
-    ```
-    KEYWORD(program)
-    IDENTIFIER(main)
-    SEMICOLON(;)
-    ```
-2. **Syntax Analysis (Parser)** - ???
+   - Tokenisasi keywords Pascal-S (program, var, begin, end, dll)
+   - Pengenalan identifier (variabel dan nama fungsi/prosedur)
+   - Operator aritmatika (+, -, \*, /, div, mod)
+   - Operator relasional (=, <>, <, <=, >, >=)
+   - Operator boolean (and, or, not)
+   - Tipe data (integer, real, boolean, string)
+   - Literal konstanta (angka, string dalam quotes)
+   - Delimiter dan separator (, ; . () [])
+   - Penanganan whitespace dan komentar
+   - Error handling untuk karakter tidak valid
+
+   Token yang dihasilkan memiliki format:
+
+   ```
+   TOKEN_TYPE(value)
+   ```
+
+   Contoh:
+
+   ```
+   KEYWORD(program)
+   IDENTIFIER(main)
+   SEMICOLON(;)
+   ```
+
+2. **Syntax Analysis (Parser)** - Membangun Abstract Syntax Tree (AST)
+
+   Parser diimplementasikan menggunakan Recursive Descent Parser dengan fitur:
+
+   - Parsing struktur program Pascal-S (header, deklarasi, body)
+   - Deklarasi variabel dengan tipe data
+   - Statement parsing (compound statements, expressions)
+   - Error handling dengan line/column tracking
+   - AST generation untuk representasi struktural program
+
+   **Parser Call Tree**:
+
+   ```
+   main.rs
+     └─> parser.parse()
+          └─> parse_program()
+               ├─> consume_keyword("program")
+               ├─> consume_token(Identifier)    # Program name
+               ├─> consume_token(Semicolon)
+               ├─> parse_declaration_part()
+               │    └─> parse_variable_declaration_block()
+               │         └─> parse_variable_group()
+               │              ├─> consume_token(Identifier)
+               │              ├─> consume_token(Colon)
+               │              └─> parse_type_spec()
+               ├─> parse_compound_statement()
+               │    ├─> consume_keyword("mulai")
+               │    ├─> parse_statement_list()
+               │    │    └─> parse_statement()
+               │    │         └─> parse_expression()
+               │    │              └─> parse_primary()
+               │    └─> consume_keyword("selesai")
+               └─> consume_token(Dot)
+
+          Returns: Ok(Program { ... }) or Err(SyntaxError)
+   ```
+
 3. **Semantic Analysis** - ???
 4. **Intermediate Code Generation** - ???
 5. **Interpreter** - ???
@@ -77,6 +118,52 @@ File Pascal-S dengan ekstensi `.pas`
 
 List token dalam format `TOKEN_TYPE(value)`
 
+### Milestone 2 - Parser
+
+Untuk menguji **parser** (output AST):
+
+```bash
+cargo run -- test/milestone-2/test1_simple_expr.pas
+```
+
+**Output Parser**:
+
+```rust
+Parsing Berhasil!
+Program {
+    name: "TestExpr",
+    declarations: [
+        Declaration::Variable(
+            VariableDeclaration {
+                groups: [
+                    VariableGroup {
+                        identifiers: ["x"],
+                        var_type: Type::Integer
+                    }
+                ]
+            }
+        )
+    ],
+    body: CompoundStatement {
+        statements: [
+            Statement::ExpressionStatement(
+                Expression::Identifier("x")
+            )
+        ]
+    }
+}
+```
+
+### Format Input
+
+File Pascal-S dengan ekstensi `.pas`
+
+### Format Output
+
+**Lexer**: List token dalam format `TOKEN_TYPE(value)`
+
+**Parser**: Abstract Syntax Tree (AST) dalam format Rust debug `{:#?}`
+
 ## Struktur Project
 
 ```
@@ -87,7 +174,14 @@ List token dalam format `TOKEN_TYPE(value)`
 │   │   ├── lexer.rs       # Core lexer implementation
 │   │   ├── dfa.rs         # DFA state machine
 │   │   └── token_types.rs # Token type definitions
-│   ├── parser/            # Syntax analyzer (future)
+│   ├── parser/            # Syntax analyzer
+│   │   ├── mod.rs         # Parser module definition
+│   │   ├── parser.rs      # Core parser implementation
+│   │   ├── ast.rs         # AST node definitions
+│   │   ├── declarations.rs # Declaration parsing
+│   │   ├── statements.rs  # Statement parsing
+│   │   ├── expressions.rs # Expression parsing
+│   │   └── error.rs       # Error handling
 │   ├── semantic_analyzer/ # Semantic analyzer (future)
 │   ├── code_generator/    # Code generator (future)
 │   ├── interpreter/       # Interpreter (future)

@@ -25,7 +25,7 @@ impl<'a> PascalLexer<'a> {
 
     pub fn get_all_tokens(&mut self) -> Vec<Token> {
         let mut tokens = Vec::new();
-				// Loop sampai semua karakter habis
+        // Loop sampai semua karakter habis
         while let Some(token) = self.next_token() {
             let is_eof = token.token_type == TokenType::Eof;
             tokens.push(token);

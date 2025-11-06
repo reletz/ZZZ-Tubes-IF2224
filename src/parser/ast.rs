@@ -50,6 +50,8 @@ pub struct ArrayTypeDefinition {
 // === STATEMENT ===
 #[derive(Debug)]
 pub enum Statement {
+    Placeholder,
+    ExpressionStatement(Expression),
 		/// 'begin' ... 'end'
 	Compound(CompoundStatement),
 	/// 'variable := expression'
@@ -143,6 +145,12 @@ pub struct ProcedureCallStatement {
 pub enum Expression {
 	/// 5, 3.14, "hello", true
 	Literal(LiteralValue),
+    Identifier(String),
+    BinaryOp {
+        left: Box<Expression>,
+        operator: String,
+        right: Box<Expression>,
+    },
 	/// 'x', 'myVariable'
 	Variable(String),
 	/// 'a + b', 'c > 10'

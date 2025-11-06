@@ -7,6 +7,7 @@ mod parser;
 
 use lexer::lexer::PascalLexer;
 use parser::parser::PascalParser;
+use parser::pretty_print::AstPrinter;
 
 fn main() {
     // 1. Parse command-line arguments
@@ -39,8 +40,16 @@ fn main() {
     let mut parser = PascalParser::new(tokens);
     match parser.parse() {
         Ok(ast_tree) => {
-            println!("Parsing Berhasil!");
-            println!("{:#?}", ast_tree); 
+            println!("Parsing Berhasil!\n");
+            
+            // Print AST
+            let mut printer = AstPrinter::new();
+            let tree_output = printer.print_program(&ast_tree);
+            println!("{}", tree_output);
+            
+            // Optional: also print debug format
+            // println!("\n=== Debug Format ===");
+            // println!("{:#?}", ast_tree);
         }
         Err(e) => {
             eprintln!("Parsing Gagal: {}", e);

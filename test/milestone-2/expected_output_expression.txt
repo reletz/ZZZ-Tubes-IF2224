@@ -1,0 +1,10 @@
+<expression>
+├── <expression>
+│   └── IDENTIFIER(a)
+├── ARITHMETIC_OPERATOR(+)
+└── <expression>
+    ├── <expression>
+    │   └── IDENTIFIER(b)
+    ├── ARITHMETIC_OPERATOR(*)
+    └── <expression>
+        └── NUMBER(10)
