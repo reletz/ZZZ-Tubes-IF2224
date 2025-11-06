@@ -7,23 +7,27 @@ impl PascalParser {
 	/// compound-statement -> 'mulai' statement-list 'selesai'
 	pub(super) fn parse_compound_statement(&mut self) -> Result<Statement, SyntaxError> {
 		self.consume_keyword("mulai", "Mengharapkan 'mulai' (begin).")?;
-		let statements = self.parse_statement_list()?;
+		let statements = self.parse_statement_list(|parser| parser.check_keyword("selesai"))?;
 		self.consume_keyword("selesai", "Mengharapkan 'selesai' (end) untuk menutup blok 'mulai'.")?;
 		Ok(Statement::Compound(CompoundStatement { statements }))
 	}
 
     /// statement-list -> (statement (';' statement)* )?
-	fn parse_statement_list(&mut self) -> Result<Vec<Statement>, SyntaxError> {
+	fn parse_statement_list<F>(
+		&mut self, 
+		mut is_terminator: F
+	,) -> Result<Vec<Statement>, SyntaxError>
+	where F: FnMut(&mut Self) -> bool, {
 		let mut statements = Vec::new();
 
-		if self.check_keyword("selesai") {
+		if is_terminator(self) {
 			return Ok(statements);
 		}
 
 		statements.push(self.parse_statement()?);
 
 		while self.match_token(&[TokenType::Semicolon]) {
-			if self.check_keyword("selesai") {
+			if is_terminator(self) {
 				break;
 			}
 			statements.push(self.parse_statement()?);
@@ -43,13 +47,10 @@ impl PascalParser {
 			self.parse_for_statement()
 		} else if self.check_keyword("ulangi") {
 			self.parse_repeat_statement()
-		} else if self.check_keyword("kasus") {
-			self.parse_case_statement()
 		} else if self.check_keyword("mulai") {
 			self.parse_compound_statement()
-		} else if self.check(TokenType::Identifier) { // For now, treat any expression as a statement (incomplete, but works for testing)
-            let expr = self.parse_expression()?;
-            return Ok(Statement::ExpressionStatement(expr));
+		} else if self.check(TokenType::Identifier) {
+            self.parse_assignment_or_call()
         } else {
 			Err(self.error("Expected statement"))
 		}
@@ -118,10 +119,114 @@ impl PascalParser {
 	}
 
 	fn parse_repeat_statement(&mut self) -> Result<Statement, SyntaxError> {
-		//TODO: Implement this
+		self.consume_keyword("ulangi", "Expected 'ulangi'.")?;
+		let statements = self.parse_statement_list(|parser| parser.check_keyword("sampai"))?;
+		self.consume_keyword("sampai", "Expected 'sampai' inside repeat-until.")?;
+		let condition = self.parse_expression()?;
+
+		Ok(Statement::Repeat(RepeatStatement{
+			statements: statements,
+			condition: condition
+		}))
+	}
+
+	fn parse_assignment_or_call(&mut self) -> Result<Statement, SyntaxError> {
+		let var = self.parse_expression()?;
+
+		if self.check(TokenType::AssignOperator) {
+			self.advance();
+			let expr = self.parse_expression()?;
+
+			Ok(Statement::Assignment(AssignmentStatement{ 
+				variable: var, 
+				expression: expr
+			}))
+		} else if self.check(TokenType::LParenthesis) {
+			let Expression::Identifier(name) = var else {
+				return Err(self.error("Expected procedure name (identifier)."))
+			};
+			self.advance();
+			let args = self.parse_argument_list()?;
+
+			if name == "readln" {
+				Ok(Statement::Read(ReadStatement{
+					variables: args
+				}))
+			} else if name == "writeln" {
+				Ok(Statement::Write(WriteStatement{
+					expressions: args
+				}))
+			} else {
+				Ok(Statement::ProcedureCall(ProcedureCallStatement{
+					procedure_name: name,
+					arguments: args
+				}))
+			}
+		} else {
+			Err(self.error("Expected ':=' or '(' after identifier."))
+		}
+	}
+
+	fn parse_argument_list(&mut self) -> Result<Vec<Expression>, SyntaxError> {
+		let mut args = Vec::new();
+
+		if !self.check(TokenType::RParenthesis) {
+			args.push(self.parse_expression()?);
+			while self.check(TokenType::Comma) {
+				self.advance();
+				args.push(self.parse_expression()?);
+			}
+		}
+
+		Ok(args)
 	}
 
 	fn parse_case_statement(&mut self) -> Result<Statement, SyntaxError> {
-		//TODO: implement this
+		self.consume_keyword("kasus", "Expected 'kasus'.")?;
+		let expr = self.parse_expression()?;
+		self.consume_keyword("dari", "Expected 'dari' after case expression.")?;
+
+		let mut branches = Vec::new();
+		while !self.check_keyword("selain-itu") && !self.check_keyword("selesai") {
+			branches.push(self.parse_case_branch()?);
+		}
+
+		let else_branch = if self.check_keyword("selain-itu") {
+			self.advance();
+			let mut statements = Vec::new();
+			while !self.check_keyword("selesai") {
+				statements.push(self.parse_statement()?);
+				if self.check(TokenType::Semicolon) {
+					self.advance();
+				}	
+			}
+			Some(statements) 
+			} else {
+				None
+		};
+		self.consume_keyword("selesai", "Expected 'selesai' at the end of case statement.")?;
+
+		Ok(Statement::Case(CaseStatement{
+			expression: expr,
+			branches: branches,
+			else_branch: else_branch
+		}))
+	}
+	
+	fn parse_case_branch(&mut self) -> Result<CaseBranch, SyntaxError> {
+		let mut labels = vec![self.parse_expression()?];
+		while self.check(TokenType::Comma) {
+			self.advance();
+			labels.push(self.parse_expression()?);
+		}
+
+		self.consume_token(TokenType::Colon, "Expected ':' after case label.")?;
+		let statement = self.parse_statement()?;
+		self.consume_token(TokenType::Semicolon, "Expected ';' after case statement.")?;
+
+		Ok(CaseBranch {
+			labels: labels,
+			statement: statement
+		})
 	}
 }

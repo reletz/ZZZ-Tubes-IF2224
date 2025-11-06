@@ -105,7 +105,15 @@ impl PascalParser {
 		let declarations = self.parse_declaration_part()?;
 
 		// 3. Parse compound-statement
-		let body = self.parse_compound_statement()?;
+		let body_stmt = self.parse_compound_statement()?;
+		let body = match body_stmt {
+			Statement::Compound(compound_stmt) => { 
+				compound_stmt 
+			},
+			_ => {
+				return Err(self.error("Program body is not a compound statement."));
+			}
+		};
 
 		// 4. Parse DOT
 		self.consume_token(TokenType::Dot, "Mengharapkan '.' di akhir program.")?;

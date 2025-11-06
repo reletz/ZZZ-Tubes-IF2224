@@ -68,8 +68,10 @@ pub enum Statement {
 	Write(WriteStatement),
 	/// 'MyProcedure(arg1, arg2)'
 	ProcedureCall(ProcedureCallStatement),
-	/// 'case expression of branch
-	/// TODO: finsih case and repeat statement
+	/// 'repeat ... ; until condition'
+	Repeat(RepeatStatement),
+	/// 'case expression of ... ; else ... end'
+	Case(CaseStatement),
 	/// Statement kosong, misal karena ';;'
 	Empty,
 }
@@ -140,6 +142,26 @@ pub struct WriteStatement {
 pub struct ProcedureCallStatement {
 	pub procedure_name: String,
 	pub arguments: Vec<Expression>,
+}
+
+#[derive(Debug)]
+pub struct RepeatStatement {
+	pub statements: Vec<Statement>,
+	pub condition: Expression
+}
+
+#[derive(Debug)]
+pub struct CaseBranch {
+	pub labels: Vec<Expression>,
+	pub statement: Statement
+}
+
+#[derive(Debug)]
+pub struct CaseStatement {
+	pub expression: Expression,
+	pub branches: Vec<CaseBranch>,
+	pub else_branch: Option<Vec<Statement>>
+
 }
 
 // === EXPRESSION ===
