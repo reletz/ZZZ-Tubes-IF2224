@@ -110,59 +110,61 @@ cargo run -- program.pas
 cargo run --bin compiler -- input.pas
 ```
 
-### Format Input
+#### Format Input
 
 File Pascal-S dengan ekstensi `.pas`
 
-### Format Output
+#### Format Output
 
 List token dalam format `TOKEN_TYPE(value)`
 
 ### Milestone 2 - Parser
 
-Untuk menguji **parser** (output AST):
+**Menguji parser dengan output AST:**
 
 ```bash
-cargo run -- test/milestone-2/test1_simple_expr.pas
+cargo run -- test/milestone-2/test4_array_func.pas
 ```
 
-**Output Parser**:
+#### **Format Input**
+
+File Pascal-S dengan ekstensi `.pas` menggunakan keyword Bahasa Indonesia.
+
+#### **Format Output**
+
+Parser menghasilkan **dua representasi AST**:
+
+##### **1. Tree-Style AST (Default Output)**
+
+```
+<program>
+├── <program-header>
+│   └── KEYWORD(program) IDENTIFIER(TestArrayFunc) ;
+├── <declaration-part>
+│   └── <var-declaration>: arr : array[...]
+├── <compound-statement>
+│   └── <statement-list>
+│       └── arr[5] := 42
+└── DOT(.)
+```
+
+##### **2. Raw AST (Debug Format)**
 
 ```rust
-Parsing Berhasil!
 Program {
-    name: "TestExpr",
-    declarations: [
-        Declaration::Variable(
-            VariableDeclaration {
-                groups: [
-                    VariableGroup {
-                        identifiers: ["x"],
-                        var_type: Type::Integer
-                    }
-                ]
-            }
-        )
-    ],
+    name: "TestArrayFunc",
+    declarations: [Variable(...)],
     body: CompoundStatement {
-        statements: [
-            Statement::ExpressionStatement(
-                Expression::Identifier("x")
-            )
-        ]
+        statements: [Assignment(...)]
     }
 }
 ```
 
-### Format Input
+**Untuk menampilkan raw AST**, uncomment di [`main.rs`](src/main.rs):
 
-File Pascal-S dengan ekstensi `.pas`
-
-### Format Output
-
-**Lexer**: List token dalam format `TOKEN_TYPE(value)`
-
-**Parser**: Abstract Syntax Tree (AST) dalam format Rust debug `{:#?}`
+```rust
+println!("{:#?}", ast_tree);
+```
 
 ## Struktur Project
 

@@ -1,3 +1,20 @@
+//! Converts the raw Abstract Syntax Tree into a human-readable visual tree format.
+//! 
+//! The parser generates nested Rust structs representing the AST. This module transforms
+//! that structure into a tree visualization matching the grammar specification.
+//! 
+//! Example Output
+//! ```text
+//! <program>
+//! ├── <program-header>
+//! │   ├── KEYWORD(program)
+//! │   └── IDENTIFIER(TestArrayFunc)
+//! ├── <compound-statement>
+//! ...
+//! ```
+//! 
+//! Uses recursive traversal with `indent_level` tracking for proper tree formatting.
+
 use super::ast::*;
 
 pub struct AstPrinter {

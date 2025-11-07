@@ -3,7 +3,6 @@ use super::ast::*;
 use crate::lexer::token_types::TokenType;
 use super::error::SyntaxError;
 
-// TODO: Array indexing, Function calls
 
 impl PascalParser {
     /// Parse expression (top-level)

@@ -56,4 +56,7 @@ fn main() {
             process::exit(1);
         }
     }
+
+    // TODO: Milestone 3
+    // pass ast_tree ke Semantic Analyzer
 }
