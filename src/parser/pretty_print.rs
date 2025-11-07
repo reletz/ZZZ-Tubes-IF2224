@@ -87,15 +87,27 @@ impl AstPrinter {
     }
 
     fn print_type(&self, var_type: &Type) -> String {
-        let type_str = match var_type {
-            Type::Integer => "KEYWORD(integer)",
-            Type::Real => "KEYWORD(real)",
-            Type::Boolean => "KEYWORD(boolean)",
-            Type::String => "KEYWORD(string)",
-            Type::Char => "KEYWORD(char)",
-            Type::Array { .. } => "ARRAY_TYPE",
-        };
-        self.print_terminal(type_str)
+        match var_type {
+            Type::Integer => self.print_terminal("KEYWORD(integer)"),
+            Type::Real => self.print_terminal("KEYWORD(real)"),
+            Type::Boolean => self.print_terminal("KEYWORD(boolean)"),
+            Type::String => self.print_terminal("KEYWORD(string)"),
+            Type::Char => self.print_terminal("KEYWORD(char)"),
+            Type::Array(array_def) => {
+                // Show as: larik[range] dari base_type
+                self.print_terminal(&format!(
+                    "ARRAY_TYPE(larik[...] dari {})",
+                    match *array_def.base_type {
+                        Type::Integer => "integer",
+                        Type::Real => "real",
+                        Type::Boolean => "boolean",
+                        Type::String => "string",
+                        Type::Char => "char",
+                        _ => "complex"
+                    }
+                ))
+            }
+        }
     }
 
     fn print_compound_statement(&mut self, stmt: &CompoundStatement) -> String {
@@ -128,12 +140,76 @@ impl AstPrinter {
 
     fn print_statement(&mut self, stmt: &Statement) -> String {
         match stmt {
+            Statement::Assignment(assign) => {
+                let mut output = String::new();
+                output.push_str(&self.print_node("<assignment-statement>"));
+                self.indent_level += 1;
+                
+                // Print variable (left side) - handle different cases
+                match &assign.variable {
+                    Expression::Identifier(name) => {
+                        output.push_str(&self.print_terminal(&format!("IDENTIFIER({})", name)));
+                    }
+                    Expression::ArrayAccess { array, index } => {
+                        // Print array access directly without wrapping in <expression>
+                        if let Expression::Identifier(name) = &**array {
+                            output.push_str(&self.print_terminal(&format!("IDENTIFIER({})", name)));
+                        } else {
+                            output.push_str(&self.print_expression(array));
+                        }
+                        output.push_str(&self.print_terminal("LBRACKET([)"));
+                        output.push_str(&self.print_expression(index));
+                        output.push_str(&self.print_terminal("RBRACKET(])"));
+                    }
+                    _ => {
+                        // Fallback for complex l-values
+                        output.push_str(&self.print_expression(&assign.variable));
+                    }
+                }
+                
+                // Print := operator
+                output.push_str(&self.print_terminal("ASSIGN_OPERATOR(:=)"));
+                
+                // Print expression (right side)
+                output.push_str(&self.print_expression(&assign.expression));
+                
+                self.indent_level -= 1;
+                output
+            }
             Statement::ExpressionStatement(expr) => {
                 let mut output = String::new();
-                output.push_str(&self.print_node("<expression-statement>"));
-                self.indent_level += 1;
-                output.push_str(&self.print_expression(expr));
-                self.indent_level -= 1;
+                
+                // For procedure calls like writeln, print them nicely
+                match expr {
+                    Expression::FunctionCall { function_name, arguments } => {
+                        output.push_str(&self.print_node("<procedure-call>"));
+                        self.indent_level += 1;
+                        output.push_str(&self.print_terminal(&format!("IDENTIFIER({})", function_name)));
+                        output.push_str(&self.print_terminal("LPARENTHESIS(()"));
+                        
+                        if !arguments.is_empty() {
+                            output.push_str(&self.print_node("<parameter-list>"));
+                            self.indent_level += 1;
+                            for (i, arg) in arguments.iter().enumerate() {
+                                output.push_str(&self.print_expression(arg));
+                                if i < arguments.len() - 1 {
+                                    output.push_str(&self.print_terminal("COMMA(,)"));
+                                }
+                            }
+                            self.indent_level -= 1;
+                        }
+                        
+                        output.push_str(&self.print_terminal("RPARENTHESIS())"));
+                        self.indent_level -= 1;
+                    }
+                    _ => {
+                        output.push_str(&self.print_node("<expression-statement>"));
+                        self.indent_level += 1;
+                        output.push_str(&self.print_expression(expr));
+                        self.indent_level -= 1;
+                    }
+                }
+                
                 output
             }
             Statement::Placeholder => self.print_node("<placeholder-statement>"),
@@ -147,70 +223,40 @@ impl AstPrinter {
         self.indent_level += 1;
         
         match expr {
-            Expression::BinaryOp { left, operator, right } if operator == "+" || operator == "-" => {
-                // simple-expression level (additive)
-                output.push_str(&self.print_node("<simple-expression>"));
-                self.indent_level += 1;
-                output.push_str(&self.print_term_or_factor(left));
-                output.push_str(&self.print_terminal(&format!("ARITHMETIC_OPERATOR({})", operator)));
-                output.push_str(&self.print_term_or_factor(right));
-                self.indent_level -= 1;
-            }
-            _ => {
-                // Just a simple-expression with one term
-                output.push_str(&self.print_node("<simple-expression>"));
-                self.indent_level += 1;
-                output.push_str(&self.print_term_or_factor(expr));
-                self.indent_level -= 1;
-            }
-        }
-        
-        self.indent_level -= 1;
-        output
-    }
-
-    fn print_term_or_factor(&mut self, expr: &Expression) -> String {
-        let mut output = String::new();
-        
-        match expr {
-            Expression::BinaryOp { left, operator, right } 
-                if operator == "*" || operator == "/" || operator == "div" || operator == "mod" => {
-                // term level (multiplicative)
-                output.push_str(&self.print_node("<term>"));
-                self.indent_level += 1;
-                output.push_str(&self.print_factor_inner(left));
-                output.push_str(&self.print_terminal(&format!("ARITHMETIC_OPERATOR({})", operator)));
-                output.push_str(&self.print_factor_inner(right));
-                self.indent_level -= 1;
-            }
-            _ => {
-                // Just a factor
-                output.push_str(&self.print_node("<term>"));
-                self.indent_level += 1;
-                output.push_str(&self.print_factor_inner(expr));
-                self.indent_level -= 1;
-            }
-        }
-        
-        output
-    }
-
-    fn print_factor_inner(&mut self, expr: &Expression) -> String {
-        let mut output = String::new();
-        output.push_str(&self.print_node("<factor>"));
-        self.indent_level += 1;
-        
-        match expr {
             Expression::Literal(lit) => {
+                output.push_str(&self.print_node("<simple-expression>"));
+                self.indent_level += 1;
+                output.push_str(&self.print_node("<term>"));
+                self.indent_level += 1;
+                output.push_str(&self.print_node("<factor>"));
+                self.indent_level += 1;
                 output.push_str(&self.print_literal(lit));
+                self.indent_level -= 3;
             }
             Expression::Identifier(name) => {
+                output.push_str(&self.print_node("<simple-expression>"));
+                self.indent_level += 1;
+                output.push_str(&self.print_node("<term>"));
+                self.indent_level += 1;
+                output.push_str(&self.print_node("<factor>"));
+                self.indent_level += 1;
                 output.push_str(&self.print_terminal(&format!("IDENTIFIER({})", name)));
+                self.indent_level -= 3;
             }
-            Expression::BinaryOp { .. } => {
-                // Nested expression - go back to expression level
+            Expression::BinaryOp { left, operator, right } => {
+                output.push_str(&self.print_node("<simple-expression>"));
+                self.indent_level += 1;
+                output.push_str(&self.print_expression_flat(left));
+                output.push_str(&self.print_terminal(&format!("OPERATOR({})", operator)));
+                output.push_str(&self.print_expression_flat(right));
                 self.indent_level -= 1;
-                return self.print_expression(expr);
+            }
+            Expression::UnaryOp { operator, operand } => {
+                output.push_str(&self.print_node("<simple-expression>"));
+                self.indent_level += 1;
+                output.push_str(&self.print_terminal(&format!("UNARY_OP({})", operator)));
+                output.push_str(&self.print_expression_flat(operand));
+                self.indent_level -= 1;
             }
             _ => {
                 output.push_str(&self.print_node("<complex-expression>"));
@@ -218,6 +264,88 @@ impl AstPrinter {
         }
         
         self.indent_level -= 1;
+        output
+    }
+    
+    fn print_expression_flat(&mut self, expr: &Expression) -> String {
+        let mut output = String::new();
+        
+        match expr {
+            Expression::Literal(lit) => {
+                output.push_str(&self.print_node("<term>"));
+                self.indent_level += 1;
+                output.push_str(&self.print_node("<factor>"));
+                self.indent_level += 1;
+                output.push_str(&self.print_literal(lit));
+                self.indent_level -= 2;
+            }
+            Expression::Identifier(name) => {
+                output.push_str(&self.print_node("<term>"));
+                self.indent_level += 1;
+                output.push_str(&self.print_node("<factor>"));
+                self.indent_level += 1;
+                output.push_str(&self.print_terminal(&format!("IDENTIFIER({})", name)));
+                self.indent_level -= 2;
+            }
+            Expression::BinaryOp { left, operator, right } => {
+                output.push_str(&self.print_expression_flat(left));
+                output.push_str(&self.print_terminal(&format!("OPERATOR({})", operator)));
+                output.push_str(&self.print_expression_flat(right));
+            }
+            Expression::UnaryOp { operator, operand } => {
+                output.push_str(&self.print_terminal(&format!("UNARY_OP({})", operator)));
+                output.push_str(&self.print_expression_flat(operand));
+            }
+            Expression::ArrayAccess { array, index } => {
+                output.push_str(&self.print_node("<term>"));
+                self.indent_level += 1;
+                output.push_str(&self.print_node("<factor>"));
+                self.indent_level += 1;
+                output.push_str(&self.print_node("<array-access>"));
+                self.indent_level += 1;
+                
+                if let Expression::Identifier(name) = &**array {
+                    output.push_str(&self.print_terminal(&format!("IDENTIFIER({})", name)));
+                } else {
+                    output.push_str(&self.print_expression_flat(array));
+                }
+                output.push_str(&self.print_terminal("LBRACKET([)"));
+                output.push_str(&self.print_expression_flat(index));
+                output.push_str(&self.print_terminal("RBRACKET(])"));
+                
+                self.indent_level -= 3;
+            }
+            Expression::FunctionCall { function_name, arguments } => {
+                output.push_str(&self.print_node("<term>"));
+                self.indent_level += 1;
+                output.push_str(&self.print_node("<factor>"));
+                self.indent_level += 1;
+                output.push_str(&self.print_node("<function-call>"));
+                self.indent_level += 1;
+                
+                output.push_str(&self.print_terminal(&format!("IDENTIFIER({})", function_name)));
+                output.push_str(&self.print_terminal("LPARENTHESIS(()"));
+                
+                if !arguments.is_empty() {
+                    output.push_str(&self.print_node("<parameter-list>"));
+                    self.indent_level += 1;
+                    for (i, arg) in arguments.iter().enumerate() {
+                        output.push_str(&self.print_expression_flat(arg));
+                        if i < arguments.len() - 1 {
+                            output.push_str(&self.print_terminal("COMMA(,)"));
+                        }
+                    }
+                    self.indent_level -= 1;
+                }
+                
+                output.push_str(&self.print_terminal("RPARENTHESIS())"));
+                self.indent_level -= 3;
+            }
+            _ => {
+                output.push_str(&self.print_node("<nested-expr>"));
+            }
+        }
+        
         output
     }
 

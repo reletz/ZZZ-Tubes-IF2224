@@ -163,11 +163,12 @@ impl PascalParser {
 				}))
 			}
 		} else {
-			Err(self.error("Expected ':=' or '(' after identifier."))
-		}
+            // If neither := nor (, treat as expression statement
+            Ok(Statement::ExpressionStatement(var))
+        }
 	}
 
-	fn parse_argument_list(&mut self) -> Result<Vec<Expression>, SyntaxError> {
+	pub(super) fn parse_argument_list(&mut self) -> Result<Vec<Expression>, SyntaxError> {
 		let mut args = Vec::new();
 
 		if !self.check(TokenType::RParenthesis) {

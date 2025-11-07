@@ -175,18 +175,26 @@ pub enum Expression {
         operator: String,
         right: Box<Expression>,
     },
+    UnaryOp {
+        operator: String,
+        operand: Box<Expression>,
+    },
+    ArrayAccess {
+        array: Box<Expression>,
+        index: Box<Expression>,
+    },
+    FunctionCall {
+        function_name: String,
+        arguments: Vec<Expression>,
+    },
 	/// 'x', 'myVariable'
 	Variable(String),
 	/// 'a + b', 'c > 10'
 	Binary(BinaryExpression),
 	/// '-x', 'not y'
 	Unary(UnaryExpression),
-	/// 'MyFunction(arg1, arg2)'
-	FunctionCall(FunctionCallExpression),
 	/// '(a + b)'
 	Grouped(Box<Expression>),
-
-	ArrayAccess(ArrayAccessExpression),
 }
 
 #[derive(Debug, Clone, PartialEq)]
