@@ -47,6 +47,8 @@ impl PascalParser {
 			self.parse_for_statement()
 		} else if self.check_keyword("ulangi") {
 			self.parse_repeat_statement()
+		} else if self.check_keyword("kasus") {
+        	self.parse_case_statement()
 		} else if self.check_keyword("mulai") {
 			self.parse_compound_statement()
 		} else if self.check(TokenType::Identifier) {
