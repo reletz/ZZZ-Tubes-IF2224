@@ -8,14 +8,16 @@ pub struct Program {
 // === DEKLARASI ===
 #[derive(Debug)]
 pub enum Declaration {
-	Variable(VariableDeclaration),
-	// Procedure(ProcedureDeclaration),
-	// Function(FunctionDeclaration),
+	Variable(VariableDeclaration), // satu blok 'variabel ... ;'
+	Constant(ConstantDeclaration), // satu blok 'konstanta ... ;'
+	Type(TypeDeclaration), // satu blok 'type ... ;'
+	Procedure(ProcedureDeclaration), // satu blok 'procedure ... ;'
+	Function(FunctionDeclaration), // satu blok 'function ... ;'
 }
 
 #[derive(Debug)]
 pub struct VariableDeclaration {
-	// Satu blok 'var' bisa berisi beberapa grup var
+	// satu blok 'var' bisa berisi beberapa grup var
 	//   x, y: integer;
 	//   z: real;
 	pub groups: Vec<VariableGroup>,
@@ -28,6 +30,63 @@ pub struct VariableGroup {
 	pub var_type: Type,
 }
 
+#[derive(Debug)]
+pub struct ConstantDeclaration {
+	// satu blok 'const' bisa berisi beberapa konstanta
+	//   PI = 3.14; ZERO = 0;
+	pub constants: Vec<ConstantDefinition>,
+}
+
+// 'ident = expression;'
+#[derive(Debug)]
+pub struct ConstantDefinition {
+	pub name: String,
+	pub value: Expression,
+}
+
+#[derive(Debug)]
+pub struct TypeDeclaration {
+	// satu blok 'type' bisa berisi beberapa tipe data
+	//   MyType = integer; AnotherType = array[1..10] of real;
+	pub definitions: Vec<TypeDefinition>,
+}
+
+// 'ident = type;'
+#[derive(Debug)]
+pub struct TypeDefinition {
+	pub name: String,
+	pub type_def: Type,
+}
+
+#[derive(Debug)]
+pub struct FormalParameterGroup {
+	// satu grup parameter dalam deklarasi prosedur/fungsi
+	//   (a, b: integer; c: real)
+	pub identifiers: Vec<String>,
+	pub var_type: Type,
+}
+
+#[derive(Debug)]
+pub struct ProcedureDeclaration {
+	// satu deklarasi prosedur
+	//  procedure MyProc(a: integer; b: real);
+	pub name: String,
+	pub parameters: Vec<FormalParameterGroup>,
+	pub declarations: Vec<Declaration>,
+	pub body: CompoundStatement,
+}
+
+#[derive(Debug)]
+pub struct FunctionDeclaration {
+	// satu deklarasi fungsi
+	//  function MyFunc(x: integer): real;
+	pub name: String,
+	pub parameters: Vec<FormalParameterGroup>,
+	pub return_type: Type,
+	pub declarations: Vec<Declaration>,
+	pub body: CompoundStatement,
+}
+
 // tipe data PASCAL-S
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
@@ -36,8 +95,17 @@ pub enum Type {
 	Boolean,
 	String,
 	Char,
-	Array(Box<ArrayTypeDefinition>)
+	Array(Box<ArrayTypeDefinition>),
+	Subrange(Box<SubrangeType>),
+	TypeIdentifier(String),
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SubrangeType {
+	pub start: Expression,
+	pub end: Expression,
+}
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ArrayTypeDefinition {
