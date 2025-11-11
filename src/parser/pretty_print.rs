@@ -124,6 +124,12 @@ impl AstPrinter {
                     }
                 ))
             }
+            Type::Subrange(subrange) => {
+                self.print_terminal("TYPE(Subrange)")
+            }
+            Type::TypeIdentifier(name) => {
+                self.print_terminal(&format!("TYPE(Identifier: {})", name))
+            }
         }
     }
 
