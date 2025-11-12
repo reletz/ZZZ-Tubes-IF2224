@@ -54,14 +54,14 @@ impl PascalParser {
 		} else if self.check(TokenType::Identifier) {
             self.parse_assignment_or_call()
         } else {
-			Err(self.error("Expected statement"))
+			Err(self.error("Mengharapkan pernyataan"))
 		}
     }
 
 	fn parse_if_statement(&mut self) -> Result<Statement, SyntaxError> {
-		self.consume_keyword("jika", "Expected 'jika'.")?;
+		self.consume_keyword("jika", "Mengharapkan 'jika'.")?;
 		let condition = self.parse_expression()?;
-		self.consume_keyword("maka", "Expected 'maka' after condition.")?;
+		self.consume_keyword("maka", "Mengharapkan 'maka' setelah kondisi.")?;
 		let then_branch = Box::new(self.parse_statement()?);
 
 		let else_branch = if self.check_keyword("selain-itu") {
@@ -79,9 +79,9 @@ impl PascalParser {
 	}
 
 	fn parse_while_statement(&mut self) -> Result<Statement, SyntaxError> {
-		self.consume_keyword("selama", "Expected 'selama'.")?;
+		self.consume_keyword("selama", "Mengharapkan 'selama'.")?;
 		let condition = self.parse_expression()?;
-		self.consume_keyword("lakukan", "Expected 'lakukan' after condition.")?;
+		self.consume_keyword("lakukan", "Mengharapkan 'lakukan' setelah kondisi.")?;
 		let body = Box::new(self.parse_statement()?);
 
 		Ok(Statement::While(WhileStatement {
@@ -91,9 +91,9 @@ impl PascalParser {
 	}
 
 	fn parse_for_statement(&mut self) -> Result<Statement, SyntaxError> {
-		self.consume_keyword("untuk", "Expected 'untuk'.")?;
-		let counter = self.consume_token(TokenType::Identifier, "Expected control variable.")?.value.clone();
-		self.consume_token(TokenType::AssignOperator, "Expected ':=' inside for loop.")?;
+		self.consume_keyword("untuk", "Mengharapkan 'untuk'.")?;
+		let counter = self.consume_token(TokenType::Identifier, "Mengharapkan variabel kontrol.")?.value.clone();
+		self.consume_token(TokenType::AssignOperator, "Mengharapkan ':=' dalam pengulangan 'untuk'.")?;
 		let start = self.parse_expression()?;
 
 		let direction = if self.check_keyword("ke") {
@@ -103,11 +103,11 @@ impl PascalParser {
 			self.advance();
 			ForDirection::DownTo
 		} else {
-			return Err(self.error("Expected 'ke' or 'turun-ke' inside for loop."));
+			return Err(self.error("Mengharapkan 'ke' or 'turun-ke' dalam pengulangan 'untuk'."));
 		};
 
 		let end = self.parse_expression()?;
-		self.consume_keyword("lakukan", "Expected 'lakukan' inside for loop.")?;
+		self.consume_keyword("lakukan", "Mengharapkan 'lakukan' dalam pengulangan 'untuk'.")?;
 		
 		let body = Box::new(self.parse_statement()?);
 
@@ -121,9 +121,9 @@ impl PascalParser {
 	}
 
 	fn parse_repeat_statement(&mut self) -> Result<Statement, SyntaxError> {
-		self.consume_keyword("ulangi", "Expected 'ulangi'.")?;
+		self.consume_keyword("ulangi", "Mengharapkan 'ulangi'.")?;
 		let statements = self.parse_statement_list(|parser| parser.check_keyword("sampai"))?;
-		self.consume_keyword("sampai", "Expected 'sampai' inside repeat-until.")?;
+		self.consume_keyword("sampai", "Mengharapkan 'sampai' dalam 'ulangi-sampai'.")?;
 		let condition = self.parse_expression()?;
 
 		Ok(Statement::Repeat(RepeatStatement{
@@ -145,7 +145,7 @@ impl PascalParser {
 			}))
 		} else if self.check(TokenType::LParenthesis) {
 			let Expression::Identifier(name) = var else {
-				return Err(self.error("Expected procedure name (identifier)."))
+				return Err(self.error("Mengharapkan nama prosedur (pengenal)."))
 			};
 			self.advance();
 			let args = self.parse_argument_list()?;
@@ -185,9 +185,9 @@ impl PascalParser {
 	}
 
 	fn parse_case_statement(&mut self) -> Result<Statement, SyntaxError> {
-		self.consume_keyword("kasus", "Expected 'kasus'.")?;
+		self.consume_keyword("kasus", "Mengharapkan 'kasus'.")?;
 		let expr = self.parse_expression()?;
-		self.consume_keyword("dari", "Expected 'dari' after case expression.")?;
+		self.consume_keyword("dari", "Mengharapkan 'dari' setelah ekspresi kasus.")?;
 
 		let mut branches = Vec::new();
 		while !self.check_keyword("selain-itu") && !self.check_keyword("selesai") {
@@ -207,7 +207,7 @@ impl PascalParser {
 			} else {
 				None
 		};
-		self.consume_keyword("selesai", "Expected 'selesai' at the end of case statement.")?;
+		self.consume_keyword("selesai", "Mengharapkan 'selesai' pada akhir pernyataan kasus.")?;
 
 		Ok(Statement::Case(CaseStatement{
 			expression: expr,
@@ -223,9 +223,9 @@ impl PascalParser {
 			labels.push(self.parse_expression()?);
 		}
 
-		self.consume_token(TokenType::Colon, "Expected ':' after case label.")?;
+		self.consume_token(TokenType::Colon, "Mengharapkan ':' setelah label kasus.")?;
 		let statement = self.parse_statement()?;
-		self.consume_token(TokenType::Semicolon, "Expected ';' after case statement.")?;
+		self.consume_token(TokenType::Semicolon, "Mengharapkan ';' setelah pernyataan kasus.")?;
 
 		Ok(CaseBranch {
 			labels: labels,
