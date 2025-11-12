@@ -118,9 +118,8 @@ pub struct ArrayTypeDefinition {
 // === STATEMENT ===
 #[derive(Debug)]
 pub enum Statement {
-    Placeholder,
     ExpressionStatement(Expression),
-		/// 'begin' ... 'end'
+	/// 'begin' ... 'end'
 	Compound(CompoundStatement),
 	/// 'variable := expression'
 	Assignment(AssignmentStatement),
@@ -140,8 +139,6 @@ pub enum Statement {
 	Repeat(RepeatStatement),
 	/// 'case expression of ... ; else ... end'
 	Case(CaseStatement),
-	/// Statement kosong, misal karena ';;'
-	Empty,
 }
 
 // 'begin' ... 'end'
@@ -255,14 +252,6 @@ pub enum Expression {
         function_name: String,
         arguments: Vec<Expression>,
     },
-	/// 'x', 'myVariable'
-	Variable(String),
-	/// 'a + b', 'c > 10'
-	Binary(BinaryExpression),
-	/// '-x', 'not y'
-	Unary(UnaryExpression),
-	/// '(a + b)'
-	Grouped(Box<Expression>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -273,65 +262,4 @@ pub enum LiteralValue {
 	String(String),
 	Boolean(bool),
 	Char(char)
-}
-
-// 'left operator right'
-#[derive(Debug, Clone, PartialEq)]
-pub struct BinaryExpression {
-	pub left: Box<Expression>,
-	pub operator: BinaryOperator,
-	pub right: Box<Expression>,
-}
-
-// 'operator operand'
-#[derive(Debug, Clone, PartialEq)]
-pub struct UnaryExpression {
-	pub operator: UnaryOperator,
-	pub operand: Box<Expression>,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct FunctionCallExpression {
-	pub function_name: String,
-	pub arguments: Vec<Expression>,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct ArrayAccessExpression {
-  // Variabel array-nya. Ini bisa rekursif, misal: 'my2DArray[5][10]'
-  // akan di-parse sebagai:
-  // ArrayAccess(
-  //   array: Box(ArrayAccess(..)),
-  //   index: Box(Literal(10))
-  // )
-  pub array: Box<Expression>,
-  pub index: Box<Expression>,
-}
-
-// === OPERATOR ===
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub enum BinaryOperator {
-	Plus,       // +
-	Minus,      // -
-	Mult,       // *
-	RealDiv,    // /
-	IntDiv,     // div
-	Mod,        // mod
-
-	Eq,					// =
-	Neq,				// <>
-	Lt,					// <
-	Le,					// <=
-	Gt,					// >
-	Ge,					// >=
-
-	And,				// and
-	Or					// or
-}
-
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub enum UnaryOperator {
-	Plus,
-	Minus,
-	Not
 }
