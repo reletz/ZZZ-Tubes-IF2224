@@ -22,10 +22,6 @@ impl PascalParser {
     &self.tokens[self.current]
 	}
 
-    pub(super) fn previous(&self) -> &Token {
-        &self.tokens[self.current - 1]
-    }
-
 	pub(super) fn advance(&mut self) -> &Token {
 		if !(self.is_at_end()) {
 			self.current += 1;

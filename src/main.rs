@@ -7,7 +7,7 @@ mod parser;
 
 use lexer::lexer::PascalLexer;
 use parser::parser::PascalParser;
-use parser::pretty_print::AstPrinter;
+use parser::output_print::AstPrinter;
 
 fn main() {
     // 1. Parse command-line arguments
