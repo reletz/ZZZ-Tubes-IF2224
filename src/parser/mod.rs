@@ -5,4 +5,4 @@ pub mod parser;
 pub mod declarations;
 pub mod expressions;
 pub mod statements;
-pub mod pretty_print;
+pub mod output_print;
