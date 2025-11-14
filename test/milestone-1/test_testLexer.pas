@@ -19,7 +19,7 @@ prosedur TestProcedure(a, b: integer);
 mulai
   jika a > b maka
     writeln('a lebih besar')
-  selain-itu
+  selain_itu
     writeln('b lebih besar ''atau'' sama');
 selesai;
 

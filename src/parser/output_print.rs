@@ -813,7 +813,7 @@ impl AstPrinter {
         output.push_str(&self.print_statement_with_last(&stmt.then_branch, !has_else)); 
 
         if let Some(else_branch) = &stmt.else_branch {
-            output.push_str(&self.print_terminal_with_last("KEYWORD(selain-itu)", false));
+            output.push_str(&self.print_terminal_with_last("KEYWORD(selain_itu)", false));
             output.push_str(&self.print_statement_with_last(else_branch, true)); // else_branch selalu terakhir
         }
 
@@ -984,7 +984,7 @@ impl AstPrinter {
         let num_statements = else_branch.len();
         let has_statements = num_statements > 0;
 
-        output.push_str(&self.print_terminal_with_last("KEYWORD(selain-itu)", !has_statements));
+        output.push_str(&self.print_terminal_with_last("KEYWORD(selain_itu)", !has_statements));
 
         if has_statements {
             for (i, statement) in else_branch.iter().enumerate() {

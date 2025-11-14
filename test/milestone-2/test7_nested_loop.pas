@@ -19,7 +19,7 @@ mulai
                 total := total + j;
                 writeln('Faktor ditemukan: ', j);
             selesai
-            selain-itu
+            selain_itu
                 is_valid := salah;
             
             j := j + 1;

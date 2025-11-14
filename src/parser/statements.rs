@@ -64,7 +64,7 @@ impl PascalParser {
 		self.consume_keyword("maka", "Mengharapkan 'maka' setelah kondisi.")?;
 		let then_branch = Box::new(self.parse_statement()?);
 
-		let else_branch = if self.check_keyword("selain-itu") {
+		let else_branch = if self.check_keyword("selain_itu") {
 			self.advance();
 			Some(Box::new(self.parse_statement()?))
 		} else {
@@ -190,11 +190,11 @@ impl PascalParser {
 		self.consume_keyword("dari", "Mengharapkan 'dari' setelah ekspresi kasus.")?;
 
 		let mut branches = Vec::new();
-		while !self.check_keyword("selain-itu") && !self.check_keyword("selesai") {
+		while !self.check_keyword("selain_itu") && !self.check_keyword("selesai") {
 			branches.push(self.parse_case_branch()?);
 		}
 
-		let else_branch = if self.check_keyword("selain-itu") {
+		let else_branch = if self.check_keyword("selain_itu") {
 			self.advance();
 			let mut statements = Vec::new();
 			while !self.check_keyword("selesai") {
