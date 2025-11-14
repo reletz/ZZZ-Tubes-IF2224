@@ -851,7 +851,7 @@ impl AstPrinter {
 
         let direction = match stmt.direction {
             ForDirection::To => "KEYWORD(ke)",
-            ForDirection::DownTo => "KEYWORD(turun-ke)",
+            ForDirection::DownTo => "KEYWORD(turun_ke)",
         };
         output.push_str(&self.print_terminal_with_last(direction, false));
         output.push_str(&self.print_expression_with_last(&stmt.end_value, false));

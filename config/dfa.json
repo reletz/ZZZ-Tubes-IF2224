@@ -172,7 +172,7 @@
     "tipe": "Keyword",
     "tidak": "LogicalOperator",
     "true": "Keyword",
-    "turun-ke": "Keyword",
+    "turun_ke": "Keyword",
     "ulangi": "Keyword",
     "untuk": "Keyword",
     "variabel": "Keyword"

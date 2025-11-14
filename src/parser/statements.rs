@@ -99,11 +99,11 @@ impl PascalParser {
 		let direction = if self.check_keyword("ke") {
 			self.advance();
 			ForDirection::To
-		} else if self.check_keyword("turun-ke") {
+		} else if self.check_keyword("turun_ke") {
 			self.advance();
 			ForDirection::DownTo
 		} else {
-			return Err(self.error("Mengharapkan 'ke' or 'turun-ke' dalam pengulangan 'untuk'."));
+			return Err(self.error("Mengharapkan 'ke' or 'turun_ke' dalam pengulangan 'untuk'."));
 		};
 
 		let end = self.parse_expression()?;
