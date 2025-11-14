@@ -396,7 +396,7 @@ impl AstPrinter {
         output.push_str(&self.print_compound_statement_with_last(&proc_decl.body, false)); // Body bukan terakhir
 
         // --- Child 4: Semicolon ---
-        output.push_str(&self.print_terminal_with_last("SEMICOLON(;", true));
+        output.push_str(&self.print_terminal_with_last("SEMICOLON(;)", true));
         
         self.indent_level -= 1;
         self.prefix_stack.pop();
@@ -420,7 +420,7 @@ impl AstPrinter {
             output.push_str(&self.print_formal_parameter_list_with_last(&proc_decl.parameters, false));
         }
 
-        output.push_str(&self.print_terminal_with_last("SEMICOLON(;", true));
+        output.push_str(&self.print_terminal_with_last("SEMICOLON(;)", true));
 
         self.indent_level -= 1;
         self.prefix_stack.pop();
@@ -460,7 +460,7 @@ impl AstPrinter {
         output.push_str(&self.print_compound_statement_with_last(&func_decl.body, false)); // Body bukan terakhir
 
         // --- Child 4: Semicolon ---
-        output.push_str(&self.print_terminal_with_last("SEMICOLON(;", true));
+        output.push_str(&self.print_terminal_with_last("SEMICOLON(;)", true));
         
         self.indent_level -= 1;
         self.prefix_stack.pop();
@@ -484,7 +484,7 @@ impl AstPrinter {
 
         output.push_str(&self.print_terminal_with_last("COLON(:)", false));
         output.push_str(&self.print_type_node_with_last(&func_decl.return_type, false)); // <type> node
-        output.push_str(&self.print_terminal_with_last("SEMICOLON(;", true));
+        output.push_str(&self.print_terminal_with_last("SEMICOLON(;)", true));
 
         self.indent_level -= 1;
         self.prefix_stack.pop();
@@ -551,7 +551,7 @@ impl AstPrinter {
                 output.push_str(&self.print_statement_with_last(statement, is_last_stmt));
                 
                 if !is_last_stmt {
-                    output.push_str(&self.print_terminal_with_last("SEMICOLON(;", false));
+                    output.push_str(&self.print_terminal_with_last("SEMICOLON(;)", false));
                 }
             }
             
@@ -926,7 +926,7 @@ impl AstPrinter {
                 let is_last_stmt = i == num_statements - 1;
                 output.push_str(&self.print_statement_with_last(statement, is_last_stmt));
                 if !is_last_stmt {
-                    output.push_str(&self.print_terminal_with_last("SEMICOLON(;", false));
+                    output.push_str(&self.print_terminal_with_last("SEMICOLON(;)", false));
                 }
             }
             self.indent_level -= 1;
@@ -1009,7 +1009,7 @@ impl AstPrinter {
         output.push_str(&self.print_statement_with_last(&branch.statement, false)); // Semicolon selalu ada
 
         // --- Child 4: SEMICOLON ---
-        output.push_str(&self.print_terminal_with_last("SEMICOLON(;", true));
+        output.push_str(&self.print_terminal_with_last("SEMICOLON(;)", true));
         
         self.indent_level -= 1;
         self.prefix_stack.pop();
@@ -1032,7 +1032,7 @@ impl AstPrinter {
                 let is_last_stmt = i == num_statements - 1;
                 output.push_str(&self.print_statement_with_last(statement, is_last_stmt));
                 if !is_last_stmt {
-                    output.push_str(&self.print_terminal_with_last("SEMICOLON(;", false));
+                    output.push_str(&self.print_terminal_with_last("SEMICOLON(;)", false));
                 }
             }
         }
@@ -1055,7 +1055,7 @@ impl AstPrinter {
                 let is_last_arg = i == num_args - 1;
                 output.push_str(&self.print_expression_with_last(arg, is_last_arg));
                 if !is_last_arg {
-                    output.push_str(&self.print_terminal_with_last("COMMA(,", false));
+                    output.push_str(&self.print_terminal_with_last("COMMA(,)", false));
                 }
             }
         }
