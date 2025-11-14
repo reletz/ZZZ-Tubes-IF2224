@@ -106,7 +106,6 @@ pub struct SubrangeType {
 	pub end: Expression,
 }
 
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct ArrayTypeDefinition {
 	pub range_start: Expression,
@@ -160,10 +159,7 @@ pub struct AssignmentStatement {
 #[derive(Debug)]
 pub struct IfStatement {
 	pub condition: Expression,
-	// Kita pakai Box<Statement> karena Statement adalah enum rekursif
-	// (misal, IfStatement bisa berisi CompoundStatement, yang berisi IfStatement lain)
-	// Box<> menempatkan data di heap, jadi ukurannya diketahui saat kompilasi.
-	pub then_branch: Box<Statement>,
+	pub then_branch: Box<Statement>, // Box<Statement> = pointer ke Statement (isi eksekusi 'if' bisa berisi statement lagi)
 	pub else_branch: Option<Box<Statement>>,
 }
 

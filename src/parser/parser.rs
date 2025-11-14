@@ -16,10 +16,10 @@ impl PascalParser {
 	}
 
 	pub(super) fn peek(&self) -> &Token {
-    if self.current >= self.tokens.len() {
-      return &self.tokens[self.tokens.len() - 1]; // Harusnya token EOF
-    }
-    &self.tokens[self.current]
+		if self.current >= self.tokens.len() {
+		return &self.tokens[self.tokens.len() - 1]; // Harusnya token EOF
+		}
+		&self.tokens[self.current]
 	}
 
 	pub(super) fn advance(&mut self) -> &Token {
@@ -29,24 +29,24 @@ impl PascalParser {
 	}
 
 	fn is_at_end(&self) -> bool {
-    self.peek().token_type == TokenType::Eof
+		self.peek().token_type == TokenType::Eof
 	}
 
 	pub(super) fn check(&self, token_type: TokenType) -> bool {
-    if self.is_at_end() {
-      return false;
-    }
-    self.peek().token_type == token_type
+		if self.is_at_end() {
+			return false;
+		} 
+		self.peek().token_type == token_type
 	}
 
 	pub(super) fn match_token(&mut self, types: &[TokenType]) -> bool {
-    for token_type in types {
+		for token_type in types {
 			if self.check(*token_type) {
 				self.advance();
 				return true;
 			}
-    }
-    false
+		} 
+		false
 	}
 
 	pub(super) fn error(&self, message: &str) -> SyntaxError {
@@ -61,14 +61,14 @@ impl PascalParser {
 		self.peek().value.to_lowercase() == value
 	}
 
-  pub(super) fn match_keyword(&mut self, values: &[&str]) -> bool {
+	pub(super) fn match_keyword(&mut self, values: &[&str]) -> bool {
 		for &value in values {
 			if self.check_keyword(value) {
 				self.advance();
 				return true;
 			}
 		} false
-  }
+	}
 
 	pub(super) fn consume_keyword(&mut self, value: &str, message: &str) -> Result<&Token, SyntaxError> {
 		if self.check_keyword(value) {
@@ -107,7 +107,7 @@ impl PascalParser {
 				compound_stmt 
 			},
 			_ => {
-				return Err(self.error("Program body is not a compound statement."));
+				return Err(self.error("Program body bukan sebuah compound statement."));
 			}
 		};
 
