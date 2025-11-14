@@ -37,33 +37,23 @@ impl AstPrinter {
         
         output.push_str("<program>\n");
         self.indent_level += 1;
-        // Tidak ada push/pop untuk root, karena level 0
+        // (Root level tidak PUSH)
 
         let has_decls = !program.declarations.is_empty();
 
         // --- Child 1: Program Header ---
-        let header_is_last = false; // Selalu diikuti oleh body dan dot
+        let header_is_last = !has_decls && false; // false, karena 2 anak lagi menyusul
         output.push_str(&self.print_program_header_with_last(&program.name, header_is_last));
         
         // --- Child 2: Declarations (Opsional) ---
         if has_decls {
-            let decls_is_last = false; // Selalu diikuti oleh body dan dot
-            self.prefix_stack.push(decls_is_last); // PUSH (untuk node <declaration-part>)
-            output.push_str(&self.print_node_with_last("<declaration-part>", decls_is_last));
-            self.indent_level += 1;
-            
-            let num_decls = program.declarations.len();
-            for (i, decl) in program.declarations.iter().enumerate() {
-                let is_last_decl = i == num_decls - 1;
-                output.push_str(&self.print_declaration_with_last(decl, is_last_decl));
-            }
-            
-            self.indent_level -= 1;
-            self.prefix_stack.pop(); // POP (untuk node <declaration-part>)
+            let decls_is_last = false; // false, karena 2 anak lagi menyusul
+            // Panggil helper BARU kita
+            output.push_str(&self.print_declaration_part_with_last(&program.declarations, decls_is_last));
         }
         
         // --- Child 3: Compound Statement (Body) ---
-        let body_is_last = false; // Selalu diikuti oleh dot
+        let body_is_last = false; // false, karena DOT menyusul
         output.push_str(&self.print_compound_statement_with_last(&program.body, body_is_last));
         
         // --- Child 4: Dot ---
@@ -100,6 +90,25 @@ impl AstPrinter {
             Declaration::Procedure(proc_decl) => self.print_procedure_declaration_with_last(proc_decl, is_last),
             Declaration::Function(func_decl) => self.print_function_declaration_with_last(func_decl, is_last),
         }
+    }
+
+    fn print_declaration_part_with_last(&mut self, declarations: &Vec<Declaration>, is_last: bool) -> String {
+        let mut output = String::new();
+
+        output.push_str(&self.print_node_with_last("<declaration-part>", is_last));
+        
+        self.prefix_stack.push(is_last);
+        self.indent_level += 1;
+
+        let num_decls = declarations.len();
+        for (i, decl) in declarations.iter().enumerate() {
+            let is_last_decl = i == num_decls - 1;
+            output.push_str(&self.print_declaration_with_last(decl, is_last_decl));
+        }
+        self.indent_level -= 1;
+        self.prefix_stack.pop();
+        
+        output
     }
 
     fn print_type_node_with_last(&mut self, var_type: &Type, is_last: bool) -> String {
@@ -156,6 +165,43 @@ impl AstPrinter {
         output
     }
 
+    /// Mencetak satu node <var-group> yang berisi id-list, type, dan semicolon
+    fn print_variable_group_with_last(&mut self, group: &VariableGroup, is_last: bool) -> String {
+        let mut output = String::new();
+        output.push_str(&self.print_node_with_last("<var-group>", is_last));
+        
+        self.indent_level += 1;
+        self.prefix_stack.push(is_last);
+
+        let list_is_last = false;
+        self.prefix_stack.push(list_is_last);
+        output.push_str(&self.print_node_with_last("<identifier-list>", list_is_last));
+        self.indent_level += 1;
+        
+        let num_ids = group.identifiers.len();
+        if num_ids > 0 {
+            for (j, id) in group.identifiers.iter().enumerate() {
+                let is_last_id = j == num_ids - 1;
+                output.push_str(&self.print_terminal_with_last(&format!("IDENTIFIER({})", id), is_last_id));
+                if !is_last_id {
+                    output.push_str(&self.print_terminal_with_last("COMMA(,)", false));
+                }
+            }
+        }
+        self.indent_level -= 1;
+        self.prefix_stack.pop();
+
+        output.push_str(&self.print_terminal_with_last("COLON(:)", false));
+
+        output.push_str(&self.print_type_node_with_last(&group.var_type, false));
+
+        output.push_str(&self.print_terminal_with_last("SEMICOLON(;)", true));
+
+        self.indent_level -= 1;
+        self.prefix_stack.pop();
+        output
+    }
+
     fn print_variable_declaration_with_last(&mut self, var_decl: &VariableDeclaration, is_last: bool) -> String {
         let mut output = String::new();
         
@@ -173,13 +219,8 @@ impl AstPrinter {
         // --- Children 2..N: Groups ---
         if has_groups {
             for (i, group) in var_decl.groups.iter().enumerate() {
-                // `print_identifier_type_group` mencetak 3 node: <id-list>, COLON, <type>
-                // Ini BUKAN node, jadi tidak perlu push/pop di sekitarnya
-                output.push_str(&self.print_identifier_type_group(&group.identifiers, &group.var_type));
-                
                 let is_last_group = i == num_groups - 1;
-                // --- Child Terakhir Grup: SEMICOLON ---
-                output.push_str(&self.print_terminal_with_last("SEMICOLON(;)", is_last_group));
+                output.push_str(&self.print_variable_group_with_last(group, is_last_group));
             }
         }
         
@@ -355,7 +396,7 @@ impl AstPrinter {
         output.push_str(&self.print_compound_statement_with_last(&proc_decl.body, false)); // Body bukan terakhir
 
         // --- Child 4: Semicolon ---
-        output.push_str(&self.print_terminal_with_last("SEMICOLON(;)", true));
+        output.push_str(&self.print_terminal_with_last("SEMICOLON(;", true));
         
         self.indent_level -= 1;
         self.prefix_stack.pop();
@@ -379,7 +420,7 @@ impl AstPrinter {
             output.push_str(&self.print_formal_parameter_list_with_last(&proc_decl.parameters, false));
         }
 
-        output.push_str(&self.print_terminal_with_last("SEMICOLON(;)", true));
+        output.push_str(&self.print_terminal_with_last("SEMICOLON(;", true));
 
         self.indent_level -= 1;
         self.prefix_stack.pop();
@@ -419,7 +460,7 @@ impl AstPrinter {
         output.push_str(&self.print_compound_statement_with_last(&func_decl.body, false)); // Body bukan terakhir
 
         // --- Child 4: Semicolon ---
-        output.push_str(&self.print_terminal_with_last("SEMICOLON(;)", true));
+        output.push_str(&self.print_terminal_with_last("SEMICOLON(;", true));
         
         self.indent_level -= 1;
         self.prefix_stack.pop();
@@ -443,7 +484,7 @@ impl AstPrinter {
 
         output.push_str(&self.print_terminal_with_last("COLON(:)", false));
         output.push_str(&self.print_type_node_with_last(&func_decl.return_type, false)); // <type> node
-        output.push_str(&self.print_terminal_with_last("SEMICOLON(;)", true));
+        output.push_str(&self.print_terminal_with_last("SEMICOLON(;", true));
 
         self.indent_level -= 1;
         self.prefix_stack.pop();
@@ -510,7 +551,7 @@ impl AstPrinter {
                 output.push_str(&self.print_statement_with_last(statement, is_last_stmt));
                 
                 if !is_last_stmt {
-                    output.push_str(&self.print_terminal_with_last("SEMICOLON(;)", false));
+                    output.push_str(&self.print_terminal_with_last("SEMICOLON(;", false));
                 }
             }
             
@@ -813,7 +854,7 @@ impl AstPrinter {
         output.push_str(&self.print_statement_with_last(&stmt.then_branch, !has_else)); 
 
         if let Some(else_branch) = &stmt.else_branch {
-            output.push_str(&self.print_terminal_with_last("KEYWORD(selain_itu)", false));
+            output.push_str(&self.print_terminal_with_last("KEYWORD(selain-itu)", false));
             output.push_str(&self.print_statement_with_last(else_branch, true)); // else_branch selalu terakhir
         }
 
@@ -851,7 +892,7 @@ impl AstPrinter {
 
         let direction = match stmt.direction {
             ForDirection::To => "KEYWORD(ke)",
-            ForDirection::DownTo => "KEYWORD(turun_ke)",
+            ForDirection::DownTo => "KEYWORD(turun-ke)",
         };
         output.push_str(&self.print_terminal_with_last(direction, false));
         output.push_str(&self.print_expression_with_last(&stmt.end_value, false));
@@ -885,7 +926,7 @@ impl AstPrinter {
                 let is_last_stmt = i == num_statements - 1;
                 output.push_str(&self.print_statement_with_last(statement, is_last_stmt));
                 if !is_last_stmt {
-                    output.push_str(&self.print_terminal_with_last("SEMICOLON(;)", false));
+                    output.push_str(&self.print_terminal_with_last("SEMICOLON(;", false));
                 }
             }
             self.indent_level -= 1;
@@ -954,7 +995,7 @@ impl AstPrinter {
                 let is_last_label = i == num_labels - 1;
                 output.push_str(&self.print_expression_with_last(label, is_last_label));
                 if !is_last_label {
-                    output.push_str(&self.print_terminal_with_last("COMMA(,", false));
+                    output.push_str(&self.print_terminal_with_last("COMMA(,)", false));
                 }
             }
         }
@@ -968,7 +1009,7 @@ impl AstPrinter {
         output.push_str(&self.print_statement_with_last(&branch.statement, false)); // Semicolon selalu ada
 
         // --- Child 4: SEMICOLON ---
-        output.push_str(&self.print_terminal_with_last("SEMICOLON(;)", true));
+        output.push_str(&self.print_terminal_with_last("SEMICOLON(;", true));
         
         self.indent_level -= 1;
         self.prefix_stack.pop();
@@ -984,14 +1025,14 @@ impl AstPrinter {
         let num_statements = else_branch.len();
         let has_statements = num_statements > 0;
 
-        output.push_str(&self.print_terminal_with_last("KEYWORD(selain_itu)", !has_statements));
+        output.push_str(&self.print_terminal_with_last("KEYWORD(selain-itu)", !has_statements));
 
         if has_statements {
             for (i, statement) in else_branch.iter().enumerate() {
                 let is_last_stmt = i == num_statements - 1;
                 output.push_str(&self.print_statement_with_last(statement, is_last_stmt));
                 if !is_last_stmt {
-                    output.push_str(&self.print_terminal_with_last("SEMICOLON(;)", false));
+                    output.push_str(&self.print_terminal_with_last("SEMICOLON(;", false));
                 }
             }
         }
