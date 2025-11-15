@@ -167,8 +167,8 @@ pub enum Statement {
 #[derive(Debug)]
 pub struct StatementList {
     // (statement (SEMICOLON statement)*)?
-    pub initial_stmt: Option<Statement>,
-    pub rest: Vec<(Token, Statement)>, // (SEMICOLON, Statement)
+    pub initial_stmt: Option<Box<Statement>>,
+    pub rest: Vec<(Token, Box<Statement>)>, // (SEMICOLON, Statement)
 }
 
 #[derive(Debug)]

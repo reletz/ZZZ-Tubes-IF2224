@@ -1,6 +1,6 @@
 use super::parser::PascalParser;
 use super::parse_tree::*;
-use crate::lexer::token_types::TokenType;
+use crate::lexer::token_types::{Token, TokenType};
 use super::error::SyntaxError;
 
 impl PascalParser {
@@ -12,9 +12,9 @@ impl PascalParser {
         let mut rest = Vec::new();
 
         while self.check(TokenType::RelationalOperator) {
-            let op = self.advance().value.clone();
+            let op_token = self.advance().clone(); 
             let right_hand_side = self.parse_simple_expression()?;
-            rest.push((op, Box::new(right_hand_side)));
+            rest.push((op_token, Box::new(right_hand_side)));
         }
 
         Ok(Expression {
@@ -31,8 +31,7 @@ impl PascalParser {
         if self.check(TokenType::ArithmeticOperator) {
             let op_val = self.peek().value.clone();
             if op_val == "+" || op_val == "-" {
-                self.advance(); // consume '+' or '-'
-                unary_op = Some(op_val);
+                unary_op = Some(self.advance().clone());
             }
         }
 
@@ -42,13 +41,13 @@ impl PascalParser {
         loop {
             let op_val = self.peek().value.clone();
             if self.check(TokenType::ArithmeticOperator) && (op_val == "+" || op_val == "-") {
-                self.advance();
+                let op_token = self.advance().clone();
                 let term = self.parse_term()?;
-                rest.push((op_val, Box::new(term)));
+                rest.push((op_token, Box::new(term)));
             } else if self.check_keyword("atau") {
-                self.advance(); // consume 'atau'
+                let op_token = self.advance().clone();
                 let term = self.parse_term()?;
-                rest.push(("atau".to_string(), Box::new(term)));
+                rest.push((op_token, Box::new(term)));
             } else {
                 break;
             }
@@ -71,15 +70,15 @@ impl PascalParser {
         loop {
             let op_val = self.peek().value.clone();
             if self.check(TokenType::ArithmeticOperator) && 
-               matches!(op_val.as_str(), "*" | "/" | "div" | "mod") {
+               matches!(op_val.as_str(), "*" | "/" | "bagi" | "mod") { // 'div' di spek adalah 'bagi'
                 
-                self.advance();
+                let op_token = self.advance().clone();
                 let factor = self.parse_factor()?;
-                rest.push((op_val, Box::new(factor)));
+                rest.push((op_token, Box::new(factor)));
             } else if self.check_keyword("dan") {
-                self.advance(); // consume 'dan'
+                let op_token = self.advance().clone();
                 let factor = self.parse_factor()?;
-                rest.push(("dan".to_string(), Box::new(factor)));
+                rest.push((op_token, Box::new(factor)));
             } else {
                 break;
             }
@@ -101,31 +100,37 @@ impl PascalParser {
 
         // 2. Loop untuk menangani "postfix" operators (chaining)
         loop {
-            if self.match_token(&[TokenType::LBracket]) {
+            if self.check(TokenType::LBracket) {
                 // --- Kasus Array Access: ... [ index ] ---
+                let l_bracket = self.advance().clone();
                 let index = self.parse_expression()?;
-                self.consume_token(TokenType::RBracket, "Mengharapkan ']' setelah indeks array.")?;
+                let r_bracket = self.consume_token(TokenType::RBracket, "Mengharapkan ']' setelah indeks array.")?.clone();
                 
                 // "Bungkus" 'factor' yang ada sekarang
                 let base_expr = self.factor_to_expression(factor);
                 factor = Factor::ArrayAccess(ArrayAccess { 
                     array: Box::new(base_expr), 
-                    index: Box::new(index) 
+                    l_bracket,
+                    index: Box::new(index),
+                    r_bracket,
                 });
                 
             } else if self.check(TokenType::LParenthesis) {
                 // --- Kasus Function Call: ... ( args ) ---
-                // 'factor' yang ada HARUS berupa Identifier atau ArrayAccess
-                let name = match factor {
+                // 'factor' yang ada HARUS berupa Identifier
+                let name_token = match factor {
                     Factor::Identifier(name) => name,
-                    // TODO: Tambahkan support untuk `arr[i](args)` jika spek memperbolehkan
                     _ => return Err(self.error("Mengharapkan nama fungsi sebelum '('.")),
                 };
 
-                let arguments = self.parse_argument_list()?;
+                // Helper baru ini akan mengurus '(', 'arg-list', dan ')'
+                let (l_paren, arguments, r_paren) = self.parse_argument_list_cst()?;
+                
                 factor = Factor::FunctionCall(FunctionCallNode { 
-                    function_name: name, 
-                    arguments 
+                    function_name: name_token, 
+                    l_paren,
+                    arguments,
+                    r_paren
                 });
 
             } else {
@@ -156,22 +161,29 @@ impl PascalParser {
 
             // Kasus 'tidak' (not)
             TokenType::Keyword if self.check_keyword("tidak") => {
-                self.advance(); // consume 'tidak'
+                let not_token = self.advance().clone(); // consume 'tidak'
                 let factor = self.parse_factor()?; // Panggil rekursif
-                Ok(Factor::Not(Box::new(factor)))
+                Ok(Factor::Not(NotFactor {
+                    not_token,
+                    factor: Box::new(factor)
+                }))
             }
 
             // Kasus ( expression )
             TokenType::LParenthesis => {
-                self.advance(); // consume '('
+                let l_paren = self.advance().clone(); // consume '('
                 let expr = self.parse_expression()?; // Panggil rekursif ke level atas
-                self.consume_token(TokenType::RParenthesis, "Mengharapkan ')' setelah ekspresi.")?;
-                Ok(Factor::Parenthesized(Box::new(expr)))
+                let r_paren = self.consume_token(TokenType::RParenthesis, "Mengharapkan ')' setelah ekspresi.")?.clone();
+                Ok(Factor::Parenthesized(ParenthesizedExpression {
+                    l_paren,
+                    expr: Box::new(expr),
+                    r_paren
+                }))
             }
 
             // Kasus IDENTIFIER
             TokenType::Identifier => {
-                let name = self.advance().value.clone();
+                let name = self.advance().clone();
                 Ok(Factor::Identifier(name))
             }
 
@@ -197,61 +209,69 @@ impl PascalParser {
 
 
     /// Meng-handle parsing literal '5', 'true', 'a', dll.
+    /// Versi CST: Hanya menyimpan token-nya.
     fn parse_literal_value(&mut self) -> Result<LiteralValue, SyntaxError> {
         
-        let token = self.advance(); // Consume token literal
+        let token = self.peek();
         
-        let literal = match token.token_type {
-            TokenType::IntegerLiteral => {
-                let val = token.value.parse::<i64>().map_err(|_| self.error("Integer literal tidak valid."))?;
-                Literal::Integer(val)
-            }
-            TokenType::RealLiteral => {
-                let val = token.value.parse::<f64>().map_err(|_| self.error("Real literal tidak valid."))?;
-                Literal::Real(val)
-            }
-            TokenType::StringLiteral => {
-                // Hilangkan tanda kutip ' di awal dan akhir
-                let val = token.value[1..token.value.len() - 1].to_string();
-                Literal::String(val)
-            }
+        match token.token_type {
+            TokenType::IntegerLiteral | 
+            TokenType::RealLiteral |
+            TokenType::StringLiteral |
             TokenType::CharLiteral => {
-                // Hilangkan tanda kutip ' di awal dan akhir
-                let val = token.value[1..token.value.len() - 1].chars().next()
-                    .ok_or_else(|| self.error("Char literal kosong."))?;
-                Literal::Char(val)
+                let token = self.advance().clone();
+                Ok(LiteralValue { token })
             }
-            TokenType::Keyword if token.value.to_lowercase() == "benar" => Literal::Boolean(true),
-            TokenType::Keyword if token.value.to_lowercase() == "salah" => Literal::Boolean(false),
-            _ => return Err(self.error("Mengharapkan literal (angka, string, char, atau boolean)."))
-        };
-
-        Ok(LiteralValue { value: Box::new(literal) })
+            TokenType::Keyword if token.value.to_lowercase() == "benar" || token.value.to_lowercase() == "salah" => {
+                let token = self.advance().clone();
+                Ok(LiteralValue { token })
+            }
+            _ => Err(self.error("Mengharapkan literal (angka, string, char, atau boolean)."))
+        }
     }
     
-    /// Meng-handle parsing `( [expression (, expression)*] )`
-    pub(super) fn parse_argument_list(&mut self) -> Result<ParameterList, SyntaxError> {
+    /// Helper baru untuk `FunctionCallNode`
+    /// Mem-parse: '(' [arg-list] ')'
+    /// Mengembalikan token `(`, `Option<ActualParameterList>`, dan token `)`
+    fn parse_argument_list_cst(&mut self) -> Result<(Token, Option<ActualParameterList>, Token), SyntaxError> {
         
-        self.consume_token(TokenType::LParenthesis, "Mengharapkan '(' untuk pemanggilan fungsi/prosedur.")?;
-        let mut expressions = Vec::new();
+        let l_paren = self.consume_token(TokenType::LParenthesis, "Mengharapkan '(' untuk pemanggilan fungsi/prosedur.")?.clone();
+        
+        let arguments = if !self.check(TokenType::RParenthesis) {
+            // Jika tidak kosong, parse list-nya
+            Some(self.parse_actual_parameter_list()?)
+        } else {
+            // Jika kosong `()`
+            None
+        };
+        
+        let r_paren = self.consume_token(TokenType::RParenthesis, "Mengharapkan ')' setelah daftar argumen.")?.clone();
+        
+        Ok((l_paren, arguments, r_paren))
+    }
 
-        // Cek jika list argumen tidak kosong (misal: `()`)
-        if !self.check(TokenType::RParenthesis) {
-            loop {
-                expressions.push(self.parse_expression()?);
-                if !self.match_token(&[TokenType::Comma]) {
-                    // Jika bukan koma, harus ')'
-                    break;
-                }
-                // Jika setelah koma adalah ')', itu error
-                if self.check(TokenType::RParenthesis) {
-                    return Err(self.error("Mengharapkan ekspresi setelah ','."));
-                }
+    /// Helper baru: Mem-parse isi dari daftar argumen
+    /// Mem-parse: <expression> (',' <expression>)*
+    fn parse_actual_parameter_list(&mut self) -> Result<ActualParameterList, SyntaxError> {
+        
+        let initial_arg = self.parse_expression()?;
+        let mut rest = Vec::new();
+
+        while self.check(TokenType::Comma) {
+            let comma_token = self.advance().clone();
+            
+            // Jika setelah koma adalah ')', itu error
+            if self.check(TokenType::RParenthesis) {
+                return Err(self.error("Mengharapkan ekspresi setelah ','."));
             }
+
+            let next_arg = self.parse_expression()?;
+            rest.push((comma_token, Box::new(next_arg)));
         }
         
-        self.consume_token(TokenType::RParenthesis, "Mengharapkan ')' setelah daftar argumen.")?;
-        
-        Ok(ParameterList { expressions })
+        Ok(ActualParameterList { 
+            initial_arg: Box::new(initial_arg), 
+            rest 
+        })
     }
 }
