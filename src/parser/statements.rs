@@ -212,33 +212,30 @@ impl PascalParser {
     /// Helper: Try to convert an Expression to a ProcedureCallStatement
     /// Only succeeds if the expression is a plain function call (no operators)
     fn expr_to_proc_call(expr: Expression) -> Option<ProcedureCallStatement> {
-        // Check if expression has no relational operators
         if !expr.rest.is_empty() {
             return None;
         }
 
-        let simple_expr = &expr.initial_simple_expr;
+        let simple_expr = *expr.initial_simple_expr;
 
-        // Check if simple expression has no unary op and no additive operators
         if simple_expr.unary_op.is_some() || !simple_expr.rest.is_empty() {
             return None;
         }
 
-        let term = &simple_expr.initial_term;
+        let term = *simple_expr.initial_term;
 
-        // Check if term has no multiplicative operators
         if !term.rest.is_empty() {
             return None;
         }
 
-        let factor = &term.initial_factor;
+        let factor = *term.initial_factor;
 
         // Check if factor is a FunctionCall
         match factor {
             Factor::FunctionCall(func_call) => {
                 Some(ProcedureCallStatement {
-                    procedure_name: func_call.function_name.clone(),
-                    arguments: func_call.arguments.clone(),
+                    procedure_name: func_call.function_name,
+                    arguments: func_call.arguments,
                 })
             }
             _ => None,

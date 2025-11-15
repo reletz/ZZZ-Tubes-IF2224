@@ -39,17 +39,15 @@ fn main() {
     // 4. PARSER
     let mut parser = PascalParser::new(tokens);
     match parser.parse() {
-        Ok(ast_tree) => {
+        Ok(parse_tree) => {
             println!("Parsing Berhasil!\n");
             
             // Print AST
-            let mut printer = ParseTreePrinter::new();
-            let tree_output = printer.print_program(&ast_tree);
-            println!("{}", tree_output);
-            
-            // Optional: also print debug format
-            // println!("\n=== Debug Format ===");
-            // println!("{:#?}", ast_tree);
+            // let mut printer = ParseTreePrinter::new();
+            // let tree_output = printer.print_program(&parse_tree);
+            // println!("{}", tree_output);
+
+            println!("{:#?}", parse_tree);
         }
         Err(e) => {
             eprintln!("Parsing Gagal: {}", e);
