@@ -1,282 +1,205 @@
 use super::parser::PascalParser;
-use super::ast::*;
-use crate::lexer::token_types::{TokenType};
+use super::parse_tree::*;
+use crate::lexer::token_types::TokenType;
 use super::error::SyntaxError;
 
 impl PascalParser {
-    /// declaration-part -> (var-declaration | ...)
-    /// Ini akan looping selama masih menemukan keyword deklarasi ('variabel')
-	pub(super) fn parse_declaration_part(&mut self) -> Result<Vec<Declaration>, SyntaxError> {
-        let mut declarations = Vec::new();
-
-        loop {
-            if self.check_keyword("konstanta") {
-                declarations.push(self.parse_constant_declaration_block()?);
-            } else if self.check_keyword("tipe") {
-                declarations.push(self.parse_type_declaration_block()?);
-            } else if self.check_keyword("variabel") {
-                declarations.push(self.parse_variable_declaration_block()?);
-            } else if self.check_keyword("prosedur") {
-                declarations.push(self.parse_procedure_declaration()?);
-            } else if self.check_keyword("fungsi") {
-                declarations.push(self.parse_function_declaration()?);
-            } else {
-                break;
-            }
-        }
+    /// 1. parse_declaration_part (Entry Point Utama)
+    ///    Sesuai Spek: (const)* + (type)* + (var)* + (subprogram)*
+    pub(super) fn parse_declaration_part(&mut self) -> Result<DeclarationPart, SyntaxError> {
         
-		Ok(declarations)
-	}
+        let mut const_declarations: Vec<ConstantDeclaration> = Vec::new();
+        let mut type_declarations: Vec<TypeDeclaration> = Vec::new();
+        let mut var_declarations: Vec<VariableDeclaration> = Vec::new();
+        let mut subprogram_declarations: Vec<SubprogramDeclaration> = Vec::new();
 
-    /// Parsing satu blok 'variabel' penuh
-    /// var-declaration-block -> 'variabel' (var-group ;)+
-    fn parse_variable_declaration_block(&mut self) -> Result<Declaration, SyntaxError> {
-        self.consume_keyword("variabel", "Mengharapkan 'variabel'.")?;
-        let mut groups = Vec::new();
+        // TODO: Implement parse_declaration_part
+        // 1. Loop `while self.check_keyword("konstanta")`:
+        //    - Panggil `self.parse_constant_declaration_block()`
+        //    - `const_declarations.push(...)`
+        // 2. Loop `while self.check_keyword("tipe")`:
+        //    - Panggil `self.parse_type_declaration_block()`
+        //    - `type_declarations.push(...)`
+        // 3. Loop `while self.check_keyword("variabel")`:
+        //    - Panggil `self.parse_variable_declaration_block()`
+        //    - `var_declarations.push(...)`
+        // 4. Loop `while self.check_keyword("prosedur") || self.check_keyword("fungsi")`:
+        //    - Panggil `self.parse_subprogram_declaration()`
+        //    - `subprogram_declarations.push(...)`
+        // 5. Kembalikan `Ok(DeclarationPart { ... })`
 
-        if !self.check(TokenType::Identifier) {
-            return Err(self.error("Blok 'Variabel' harus berisi setidaknya satu grup variabel."));
-        }
-
-        groups.push(self.parse_variable_group()?);
-
-        while self.match_token(&[TokenType::Semicolon]) {
-            if !self.check(TokenType::Identifier) {
-                break;
-            }
-            groups.push(self.parse_variable_group()?);
-        }
-
-        Ok(Declaration::Variable(VariableDeclaration { groups }))
+        unimplemented!("parse_declaration_part belum diimplementasikan")
     }
 
-    /// Helper function untuk parsing variable group dan parameter group
-    fn __parse_identifier_list(&mut self, entity_name: &str) -> Result<(Vec<String>, Type), SyntaxError> {
-        let mut identifiers = Vec::new();
+    // --- 1. CONSTANT Declarations ---
 
-        let first_ident = self.consume_token(TokenType::Identifier, &format!("Mengharapkan identifier {}.", entity_name))?;
-        identifiers.push(first_ident.value.clone());
-
-        while self.match_token(&[TokenType::Comma]) {
-            let next_ident = self.consume_token(TokenType::Identifier, &format!("Mengharapkan identifier {} setelah ','.", entity_name))?;
-            identifiers.push(next_ident.value.clone());
-        }
-
-        self.consume_token(TokenType::Colon, &format!("Mengharapkan ':' setelah daftar identifier {}.", entity_name))?;
-        let var_type = self.parse_type_spec()?;
-
-        Ok((identifiers, var_type))
+    fn parse_constant_declaration_block(&mut self) -> Result<ConstantDeclaration, SyntaxError> {
+        // TODO: Implement parse_constant_declaration_block
+        // 1. `self.consume_keyword("konstanta", ...)`
+        // 2. `let mut constants = Vec::new()`.
+        // 3. Loop `while self.check(TokenType::Identifier)`:
+        //    a. `let name = self.consume_token(Identifier, ...).value.clone()`
+        //    b. `self.consume_token(RelationalOperator, "Mengharapkan '='")` (pastikan value-nya "=")
+        //    c. `let value = self.parse_expression()?`
+        //    d. `self.consume_token(Semicolon, ...)`
+        //    e. `constants.push(ConstantDefinition { name, value })`
+        // 4. Kembalikan `Ok(ConstantDeclaration { constants })`
+        
+        unimplemented!("parse_constant_declaration_block belum diimplementasikan")
     }
 
-    /// Parsing satu grup variabel: 'id1, id2 : tipe'
-    /// var-group -> identifier-list ':' type-spec
-    fn parse_variable_group(&mut self) -> Result<VariableGroup, SyntaxError> {
-        let (identifiers, var_type) = self.__parse_identifier_list("variabel")?;
-        Ok(VariableGroup { identifiers, var_type })
+    // --- 2. TYPE Declarations ---
+
+    fn parse_type_declaration_block(&mut self) -> Result<TypeDeclaration, SyntaxError> {
+        // TODO: Implement parse_type_declaration_block
+        // 1. `self.consume_keyword("tipe", ...)`
+        // 2. `let mut definitions = Vec::new()`.
+        // 3. Loop `while self.check(TokenType::Identifier)`:
+        //    a. `let name = self.consume_token(Identifier, ...).value.clone()`
+        //    b. `self.consume_token(RelationalOperator, "Mengharapkan '='")` (pastikan value-nya "=")
+        //    c. `let type_def = self.parse_type_spec()?`
+        //    d. `self.consume_token(Semicolon, ...)`
+        //    e. `definitions.push(TypeDefinition { name, type_def })`
+        // 4. Kembalikan `Ok(TypeDeclaration { definitions })`
+
+        unimplemented!("parse_type_declaration_block belum diimplementasikan")
     }
 
-    /// Parsing satu grup parameter : 'id1, id2 : tipe'
-    /// parameter-group -> identifier-list ':' type-spec
-    fn parse_parameter_group(&mut self) -> Result<FormalParameterGroup, SyntaxError> {
-        let (identifiers, var_type) = self.__parse_identifier_list("parameter")?;
-        Ok(FormalParameterGroup { identifiers, var_type })
+    // --- 3. VARIABLE Declarations ---
+
+    fn parse_variable_declaration_block(&mut self) -> Result<VariableDeclaration, SyntaxError> {
+        // TODO: Implement parse_variable_declaration_block
+        // 1. `self.consume_keyword("variabel", ...)`
+        // 2. `let mut groups = Vec::new()`.
+        // 3. Loop `while self.check(TokenType::Identifier)`:
+        //    a. `let identifiers = self.parse_identifier_list()?`
+        //    b. `self.consume_token(Colon, ...)`
+        //    c. `let var_type = self.parse_type_spec()?`
+        //    d. `self.consume_token(Semicolon, ...)`
+        //    e. `groups.push(VariableGroup { identifiers, var_type })`
+        // 4. Kembalikan `Ok(VariableDeclaration { groups })`
+
+        unimplemented!("parse_variable_declaration_block belum diimplementasikan")
     }
 
-    /// Parsing daftar parameter
-    fn parse_formal_parameter_list(&mut self) -> Result<Vec<FormalParameterGroup>, SyntaxError> {
-        let mut params = Vec::new();
+    // --- 4. SUBPROGRAM Declarations (Procedure / Function) ---
 
-        if self.check(TokenType::RParenthesis) {
-            self.advance();
-            return Ok(params);
-        }
+    fn parse_subprogram_declaration(&mut self) -> Result<SubprogramDeclaration, SyntaxError> {
+        // TODO: Implement parse_subprogram_declaration (Router)
+        // 1. `if self.check_keyword("prosedur")`:
+        //    - `self.parse_procedure_declaration()`
+        // 2. `else if self.check_keyword("fungsi")`:
+        //    - `self.parse_function_declaration()`
+        // 3. `else`:
+        //    - `Err(...)`
 
-        params.push(self.parse_parameter_group()?);
-
-        while self.match_token(&[TokenType::Semicolon]) {
-            params.push(self.parse_parameter_group()?);
-        }
-
-        self.consume_token(TokenType::RParenthesis, "Mengharapkan ')' setelah daftar parameter.")?;
-        Ok(params)
+        unimplemented!("parse_subprogram_declaration belum diimplementasikan")
     }
 
-    /// Parsing satu blok 'konstanta' penuh
-    /// const-declaration -> 'konstanta' (const-definition ;)+
-    fn parse_constant_declaration_block(&mut self) -> Result<Declaration, SyntaxError> {
-        self.consume_keyword("konstanta", "Mengharapkan 'konstanta'.")?;
-        let mut constants = Vec::new();
-
-        if !self.check(TokenType::Identifier) {
-            return Err(self.error("Blok 'Konstanta' harus berisi setidaknya satu definisi konstanta."));
-        }
-
-        while self.check(TokenType::Identifier) {
-            let name = self.consume_token(TokenType::Identifier, "Mengharapkan identifier konstanta.")?.value.clone();
-
-            let op_token = self.consume_token(TokenType::RelationalOperator, "Mengharapkan '=' setelah identifier konstanta.")?;
-            if op_token.value != "=" {
-                return Err(self.error("Mengharapkan '=' setelah identifier konstanta."));
-            }
-
-            let value = self.parse_expression()?;
-
-            self.consume_token(TokenType::Semicolon, "Mengharapkan ';' setelah definisi konstanta.")?;
-
-            constants.push(ConstantDefinition { name, value });
-        }
-
-        Ok(Declaration::Constant(ConstantDeclaration { constants }))
+    fn parse_procedure_declaration(&mut self) -> Result<SubprogramDeclaration, SyntaxError> {
+        // TODO: Implement parse_procedure_declaration
+        // 1. `self.consume_keyword("prosedur", ...)`
+        // 2. `let name = self.consume_token(Identifier, ...).value.clone()`
+        // 3. `let parameters = self.parse_formal_parameter_list()?` (Sesuai Revisi 3, () wajib)
+        // 4. `self.consume_token(Semicolon, "Mengharapkan ';' setelah header prosedur")`
+        // 5. `let declarations = self.parse_declaration_part()?` (Panggilan REKURSIF)
+        // 6. `let body = self.parse_compound_statement()?`
+        // 7. `self.consume_token(Semicolon, "Mengharapkan ';' setelah blok prosedur")`
+        // 8. Kembalikan `Ok(SubprogramDeclaration::Procedure(ProcedureDeclaration { ... }))`
+        
+        unimplemented!("parse_procedure_declaration belum diimplementasikan")
     }
 
-    /// Parsing satu blok 'tipe' penuh
-    /// type-declaration -> 'tipe' (type-definition ;)+
-    fn parse_type_declaration_block(&mut self) -> Result<Declaration, SyntaxError> {
-        self.consume_keyword("tipe", "Mengharapkan 'tipe'.")?;
-        let mut definitions = Vec::new();
+    fn parse_function_declaration(&mut self) -> Result<SubprogramDeclaration, SyntaxError> {
+        // TODO: Implement parse_function_declaration
+        // 1. `self.consume_keyword("fungsi", ...)`
+        // 2. `let name = self.consume_token(Identifier, ...).value.clone()`
+        // 3. `let parameters = self.parse_formal_parameter_list()?` (Sesuai Revisi 3, () wajib)
+        // 4. `self.consume_token(Colon, "Mengharapkan ':' untuk return type")`
+        // 5. `let return_type = self.parse_type_spec()?`
+        // 6. `self.consume_token(Semicolon, "Mengharapkan ';' setelah header fungsi")`
+        // 7. `let declarations = self.parse_declaration_part()?` (Panggilan REKURSIF)
+        // 8. `let body = self.parse_compound_statement()?`
+        // 9. `self.consume_token(Semicolon, "Mengharapkan ';' setelah blok fungsi")`
+        // 10. Kembalikan `Ok(SubprogramDeclaration::Function(FunctionDeclaration { ... }))`
 
-        if !self.check(TokenType::Identifier) {
-            return Err(self.error("Blok 'Tipe' harus berisi setidaknya satu definisi tipe."));
-        }
-
-        while self.check(TokenType::Identifier) {
-            let name = self.consume_token(TokenType::Identifier, "Mengharapkan identifier tipe.")?.value.clone();
-
-            let op_token = self.consume_token(TokenType::RelationalOperator, "Mengharapkan '=' setelah identifier tipe.")?;
-            if op_token.value != "=" {
-                return Err(self.error("Mengharapkan '=' setelah identifier tipe."));
-            }
-
-            let type_def = self.parse_type_spec()?;
-
-            self.consume_token(TokenType::Semicolon, "Mengharapkan ';' setelah definisi tipe.")?;
-
-            definitions.push(TypeDefinition { name, type_def });
-        }
-
-        Ok(Declaration::Type(TypeDeclaration { definitions }))
+        unimplemented!("parse_function_declaration belum diimplementasikan")
     }
 
-    /// Parsing deklarasi 'prosedur' penuh
-    /// procedure-declaration -> 'prosedur' identifier ( '(' formal-parameter-group ( ';' formal-parameter-group )* ')' )? ';' declaration-part 'begin' compound-statement 'end' ';'
-    fn parse_procedure_declaration(&mut self) -> Result<Declaration, SyntaxError> {
-        self.consume_keyword("prosedur", "Mengharapkan 'prosedur'.")?;
-        let name = self.consume_token(TokenType::Identifier, "Mengharapkan identifier prosedur.")?.value.clone();
+    // --- HELPER UNTUK DECLARATIONS ---
 
-        let parameters = if self.match_token(&[TokenType::LParenthesis]) {
-            self.parse_formal_parameter_list()?
-        } else {
-            Vec::new()
-        };
-
-        self.consume_token(TokenType::Semicolon, "Mengharapkan ';' setelah deklarasi parameter prosedur.")?;
-
-        let declarations = self.parse_declaration_part()?;
-
-        let body_stmt = self.parse_compound_statement()?;
-        let body = match body_stmt {
-            Statement::Compound(compound_stmt) => compound_stmt,
-            _ => return Err(self.error("Mengharapkan blok 'mulai ... selesai.' sebagai badan prosedur.")),
-        };
-
-        self.consume_token(TokenType::Semicolon, "Mengharapkan ';' setelah deklarasi prosedur.")?;
-
-        Ok(Declaration::Procedure(ProcedureDeclaration {
-            name,
-            parameters,
-            declarations,
-            body,
-        }))
+    /// Mem-parse: '(' [param-group (';' param-group)*] ')'
+    /// Sesuai Revisi 3, () wajib
+    fn parse_formal_parameter_list(&mut self) -> Result<FormalParameterList, SyntaxError> {
+        // TODO: Implement parse_formal_parameter_list
+        // 1. `self.consume_token(LParenthesis, ...)`
+        // 2. `let mut parameters = Vec::new()`.
+        // 3. `if !self.check(RParenthesis)` (Handle list kosong `()`)
+        // 4. Loop:
+        //    a. `let id_list = self.parse_identifier_list()?`
+        //    b. `self.consume_token(Colon, ...)`
+        //    c. `let var_type = self.parse_type_spec()?`
+        //    d. `parameters.push(FormalParameterGroup { identifiers: id_list, var_type })`
+        //    e. `if !self.match_token(Semicolon)` `break;`
+        // 5. `self.consume_token(RParenthesis, ...)`
+        // 6. Kembalikan `Ok(FormalParameterList { parameters })`
+        
+        unimplemented!("parse_formal_parameter_list belum diimplementasikan")
     }
 
-    /// Parsing deklarasi 'fungsi' penuh
-    /// function-declaration -> 'fungsi' identifier ( '(' formal-parameter-group ( ';' formal-parameter-group )* ')' )? ':' type-spec ';' declaration-part 'begin' compound-statement 'end' ';'
-    fn parse_function_declaration(&mut self) -> Result<Declaration, SyntaxError> {
-        self.consume_keyword("fungsi", "Mengharapkan 'fungsi'.")?;
-        let name = self.consume_token(TokenType::Identifier, "Mengharapkan identifier fungsi.")?.value.clone();
-
-        let parameters = if self.match_token(&[TokenType::LParenthesis]) {
-            self.parse_formal_parameter_list()?
-        } else {
-            Vec::new()
-        };
-
-        self.consume_token(TokenType::Colon, "Mengharapkan ':' setelah deklarasi parameter fungsi.")?;
-        let return_type = self.parse_type_spec()?;
-
-        self.consume_token(TokenType::Semicolon, "Mengharapkan ';' setelah deklarasi tipe pengembalian fungsi.")?;
-
-        let declarations = self.parse_declaration_part()?;
-
-        let body_stmt = self.parse_compound_statement()?;
-        let body = match body_stmt {
-            Statement::Compound(compound_stmt) => compound_stmt,
-            _ => return Err(self.error("Mengharapkan blok 'mulai ... selesai.' sebagai badan fungsi.")),
-        };
-
-        self.consume_token(TokenType::Semicolon, "Mengharapkan ';' setelah deklarasi fungsi.")?;
-
-        Ok(Declaration::Function(FunctionDeclaration {
-            name,
-            parameters,
-            return_type,
-            declarations,
-            body,
-        }))
+    /// Mem-parse: ID (',' ID)*
+    fn parse_identifier_list(&mut self) -> Result<IdentifierList, SyntaxError> {
+        // TODO: Implement parse_identifier_list
+        // 1. `let mut identifiers = Vec::new()`.
+        // 2. `identifiers.push(self.consume_token(Identifier, ...).value.clone())` (Harus ada minimal 1)
+        // 3. Loop `while self.match_token(&[TokenType::Comma])`:
+        //    - `identifiers.push(self.consume_token(Identifier, "Mengharapkan ID setelah ','").value.clone())`
+        // 4. Kembalikan `Ok(IdentifierList { identifiers })`
+        
+        unimplemented!("parse_identifier_list belum diimplementasikan")
     }
 
-    /// Parsing spesifikasi tipe data
-    /// type-spec -> 'integer' | 'real' | 'boolean' | 'string' | 'char' | array-type
-    fn parse_type_spec(&mut self) -> Result<Type, SyntaxError> {
-        if self.match_keyword(&["integer"]) {
-            Ok(Type::Integer)
-        } else if self.match_keyword(&["real"]) {
-            Ok(Type::Real)
-        } else if self.match_keyword(&["boolean"]) {
-            Ok(Type::Boolean)
-        } else if self.match_keyword(&["string"]) {
-            Ok(Type::String)
-        } else if self.match_keyword(&["char"]) {
-            Ok(Type::Char)
-        } else if self.match_keyword(&["larik"]) {
-            self.consume_token(TokenType::LBracket, "Mengharapkan '[' setelah 'larik'.")?;
-            
-            let range_start = self.parse_expression()?;
-            
-            self.consume_token(TokenType::RangeOperator, "Mengharapkan '..' di antara range array.")?;
-            
-            let range_end = self.parse_expression()?;
-            
-            self.consume_token(TokenType::RBracket, "Mengharapkan ']' setelah range array.")?;
-            self.consume_keyword("dari", "Mengharapkan 'dari' (of) setelah range array.")?;
-            
-            // Rekursif: memanggil dirinya sendiri
-            let base_type = self.parse_type_spec()?; 
+    /// Mem-parse Tipe Data (integer, real, array, subrange, dll.)
+    pub(super) fn parse_type_spec(&mut self) -> Result<Type, SyntaxError> {
+        // TODO: Implement parse_type_spec (Router Tipe)
+        // 1. `if self.match_keyword(&["integer"]) { Ok(Type::Integer) }`
+        // 2. `else if self.match_keyword(&["real"]) { Ok(Type::Real) }`
+        // 3. (Lakukan hal yang sama untuk `boolean`, `string`, `char`)
+        // 4. `else if self.match_keyword(&["larik"])`:
+        //    - Panggil `self.parse_array_type()`
+        // 5. `else if self.check(TokenType::Identifier)`:
+        //    - `let name = self.advance().value.clone()`
+        //    - `Ok(Type::TypeIdentifier(name))`
+        // 6. `else`:
+        //    - Cek `Range`: `let start = self.parse_expression()` (Ini rumit karena `parse_expression` bisa memakan ID)
+        //    - (Mungkin `parse_range` harus dipanggil di sini, atau `parse_expression` harus di-refine)
+        //    - `if self.check(RangeOperator) { ... parse_range ... }`
+        //    - `Err(self.error("Mengharapkan tipe data."))`
 
-            Ok(Type::Array(Box::new(ArrayTypeDefinition {
-                range_start,
-                range_end,
-                base_type: Box::new(base_type),
-            })))
-        } else {
-            let expr = self.parse_expression()?;
+        unimplemented!("parse_type_spec belum diimplementasikan")
+    }
 
-            if self.match_token(&[TokenType::RangeOperator]) {
-                let range_end = self.parse_expression()?;
-                Ok(Type::Subrange(Box::new(SubrangeType {
-                    start: expr,
-                    end: range_end,
-                })))
-            } else {
-                match expr {
-                    Expression::Identifier(name) => {
-                        Ok(Type::TypeIdentifier(name))
-                    },
-                    _ => {
-                        Err(self.error("Mengharapkan tipe data (integer, real, dll.), nama custom type, atau '..' untuk subrange."))
-                    }
-                }
-            }
-        }
+    /// Mem-parse: '[' <range> ']' 'dari' <type>
+    fn parse_array_type(&mut self) -> Result<Type, SyntaxError> {
+        // TODO: Implement parse_array_type
+        // 1. `self.consume_token(LBracket, ...)`
+        // 2. `let range = self.parse_range()?`
+        // 3. `self.consume_token(RBracket, ...)`
+        // 4. `self.consume_keyword("dari", ...)`
+        // 5. `let base_type = self.parse_type_spec()?` (Panggilan REKURSIF)
+        // 6. Kembalikan `Ok(Type::Array(ArrayType { range: Box::new(range), base_type: Box::new(base_type) }))`
+
+        unimplemented!("parse_array_type belum diimplementasikan")
+    }
+
+    /// Mem-parse: <expression> '..' <expression>
+    fn parse_range(&mut self) -> Result<Range, SyntaxError> {
+        // TODO: Implement parse_range
+        // 1. `let start = self.parse_expression()?`
+        // 2. `self.consume_token(RangeOperator, "Mengharapkan '..'")`
+        // 3. `let end = self.parse_expression()?`
+        // 4. Kembalikan `Ok(Range { start: Box::new(start), end: Box::new(end) })`
+        
+        unimplemented!("parse_range belum diimplementasikan")
     }
 }

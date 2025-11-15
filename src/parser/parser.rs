@@ -1,4 +1,4 @@
-use super::ast::*;
+use super::parse_tree::*;
 use crate::lexer::token_types::{Token, TokenType};
 use super::error::SyntaxError;
 
@@ -90,33 +90,23 @@ impl PascalParser {
 		self.parse_program()
 	}
 
-	// program -> program-header + declaration-part + compound-statement + DOT
 	fn parse_program(&mut self) -> Result<Program, SyntaxError> {
-		// 1. Parse program-header
-		self.consume_keyword("program", "Mengharapkan keyword 'program'.")?; // "program"
+		self.consume_keyword("program", "Mengharapkan keyword 'program'.")?;
 		let program_name = self.consume_token(TokenType::Identifier, "Mengharapkan nama program.")?.value.clone();
 		self.consume_token(TokenType::Semicolon, "Mengharapkan ';' setelah nama program.")?;
+        let header = ProgramHeader { name: program_name };
 
 		// 2. Parse declaration-part
 		let declarations = self.parse_declaration_part()?;
 
 		// 3. Parse compound-statement
-		let body_stmt = self.parse_compound_statement()?;
-		let body = match body_stmt {
-			Statement::Compound(compound_stmt) => { 
-				compound_stmt 
-			},
-			_ => {
-				return Err(self.error("Program body bukan sebuah compound statement."));
-			}
-		};
-
+		let body = self.parse_compound_statement()?;
+		
 		// 4. Parse DOT
 		self.consume_token(TokenType::Dot, "Mengharapkan '.' di akhir program.")?;
 
-		// 5. Selesai. Kembalikan AST Node.
 		Ok(Program {
-			name: program_name,
+			header: header,
 			declarations: declarations,
 			body: body,
 		})

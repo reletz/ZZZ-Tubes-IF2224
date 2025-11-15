@@ -1,229 +1,124 @@
 use super::parser::PascalParser;
-use super::ast::*;
+use super::parse_tree::*;
 use crate::lexer::token_types::TokenType;
 use super::error::SyntaxError;
 
-
 impl PascalParser {
-    /// Parse expression (top-level)
-    /// expression -> simple-expression (relational-op simple-expression)?
+    /// 1. parse_expression (Entry Point)
+    ///    Sesuai Spek: <expression> -> <simple-expression> ( <relational-operator> <simple-expression> )*
     pub(super) fn parse_expression(&mut self) -> Result<Expression, SyntaxError> {
-        let left = self.parse_simple_expression()?;
-
-        // Check for relational operators
-        if self.check(TokenType::RelationalOperator) {
-            let op = self.advance().value.clone();
-            let right = self.parse_simple_expression()?;
-            return Ok(Expression::BinaryOp {
-                left: Box::new(left),
-                operator: op,
-                right: Box::new(right),
-            });
-        }
-
-        Ok(left)
+        
+        // TODO: Implement parse_expression
+        // 1. Panggil `self.parse_simple_expression()` untuk mendapatkan `initial_simple_expr`.
+        // 2. Buat `rest = Vec::new()`.
+        // 3. Loop selama `self.check(TokenType::RelationalOperator)`.
+        // 4. Di dalam loop:
+        //    a. Ambil `op = self.advance().value.clone()`.
+        //    b. Panggil `self.parse_simple_expression()` lagi untuk `right_hand_side`.
+        //    c. `rest.push((op, Box::new(right_hand_side)))`.
+        // 5. Kembalikan `Ok(Expression { initial_simple_expr: Box::new(...), rest })`.
+        
+        unimplemented!("parse_expression belum diimplementasikan")
     }
 
-    /// Parse simple expression (addition/subtraction/or level)
-    /// simple-expression -> [sign] term (('+' | '-' | 'atau') term)*
-    fn parse_simple_expression(&mut self) -> Result<Expression, SyntaxError> {
-        // Handle unary sign (+ or -)
-        let mut expr = if self.check(TokenType::ArithmeticOperator) {
-            let op = self.peek().value.clone();
-            if op == "+" || op == "-" {
-                self.advance();
-                let operand = self.parse_term()?;
-                if op == "-" {
-                    Expression::UnaryOp {
-                        operator: op,
-                        operand: Box::new(operand),
-                    }
-                } else {
-                    operand // Unary + is a no-op
-                }
-            } else {
-                self.parse_term()?
-            }
-        } else {
-            self.parse_term()?
-        };
+    /// 2. parse_simple_expression
+    ///    Sesuai Spek: <simple-expression> -> [sign] <term> ( <additive-operator> <term> )*
+    fn parse_simple_expression(&mut self) -> Result<SimpleExpression, SyntaxError> {
+        
+        // TODO: Implement parse_simple_expression
+        // 1. Cek `unary_op = Some(...)` jika ada `+` atau `-` di awal. Ingat `self.advance()`.
+        // 2. Panggil `self.parse_term()` untuk `initial_term`.
+        // 3. Buat `rest = Vec::new()`.
+        // 4. Loop:
+        //    a. Cek jika token berikutnya adalah `+`, `-` (ArithmeticOperator) atau `atau` (LogicalOperator).
+        //    b. Jika ya, `self.advance()`, ambil `op`, panggil `self.parse_term()`, dan `rest.push(...)`.
+        //    c. Jika tidak, `break`.
+        // 5. Kembalikan `Ok(SimpleExpression { unary_op, initial_term: Box::new(...), rest })`.
 
-        // Handle binary operators at this level
-        loop {
-            if self.check(TokenType::ArithmeticOperator) {
-                let peek_val = self.peek().value.clone();
-                if peek_val == "+" || peek_val == "-" {
-                    self.advance();
-                    let right = self.parse_term()?;
-                    expr = Expression::BinaryOp {
-                        left: Box::new(expr),
-                        operator: peek_val,
-                        right: Box::new(right),
-                    };
-                } else {
-                    break;
-                }
-            } else if self.check(TokenType::LogicalOperator) {
-                let peek_val = self.peek().value.clone();
-                if peek_val == "atau" {
-                    self.advance();
-                    let right = self.parse_term()?;
-                    expr = Expression::BinaryOp {
-                        left: Box::new(expr),
-                        operator: peek_val,
-                        right: Box::new(right),
-                    };
-                } else {
-                    break;
-                }
-            } else {
-                break;
-            }
-        }
-
-        Ok(expr)
+        unimplemented!("parse_simple_expression belum diimplementasikan")
     }
 
-    /// Parse term (multiplication/division/mod/and level)
-    /// term -> factor (('*' | '/' | 'div' | 'mod' | 'dan') factor)*
-    fn parse_term(&mut self) -> Result<Expression, SyntaxError> {
-        let mut left = self.parse_factor()?;
+    /// 3. parse_term
+    ///    Sesuai Spek: <term> -> <factor> ( <multiplicative-operator> <factor> )*
+    fn parse_term(&mut self) -> Result<Term, SyntaxError> {
+        
+        // TODO: Implement parse_term
+        // 1. Panggil `self.parse_factor()` untuk `initial_factor`.
+        // 2. Buat `rest = Vec::new()`.
+        // 3. Loop:
+        //    a. Cek jika token berikutnya adalah `*`, `/`, `div`, `mod` (ArithmeticOperator) atau `dan` (LogicalOperator).
+        //    b. Jika ya, `self.advance()`, ambil `op`, panggil `self.parse_factor()`, dan `rest.push(...)`.
+        //    c. Jika tidak, `break`.
+        // 4. Kembalikan `Ok(Term { initial_factor: Box::new(...), rest })`.
 
-        loop {
-            if self.check(TokenType::ArithmeticOperator) {
-                let peek_val = self.peek().value.clone();
-                if peek_val == "*" || peek_val == "/" || peek_val == "div" || peek_val == "mod" {
-                    self.advance();
-                    let right = self.parse_factor()?;
-                    left = Expression::BinaryOp {
-                        left: Box::new(left),
-                        operator: peek_val,
-                        right: Box::new(right),
-                    };
-                } else {
-                    break;
-                }
-            } else if self.check(TokenType::LogicalOperator) {
-                let peek_val = self.peek().value.clone();
-                if peek_val == "dan" {
-                    self.advance();
-                    let right = self.parse_factor()?;
-                    left = Expression::BinaryOp {
-                        left: Box::new(left),
-                        operator: peek_val,
-                        right: Box::new(right),
-                    };
-                } else {
-                    break;
-                }
-            } else {
-                break;
-            }
-        }
-
-        Ok(left)
+        unimplemented!("parse_term belum diimplementasikan")
     }
 
-    /// Parse factor (primary expressions)
-    /// factor -> 'tidak' factor | NUMBER | BOOLEAN | STRING | CHAR | IDENTIFIER | '(' expression ')'
-    fn parse_factor(&mut self) -> Result<Expression, SyntaxError> {
-        let token = self.peek();
+    /// 4. parse_factor (DAN LOGIKA CHAINING)
+    ///    Sesuai Spek: <factor> -> literal | ID | '(' <expression> ')' | 'tidak' <factor> | <function-call> | <array-access>
+    fn parse_factor(&mut self) -> Result<Factor, SyntaxError> {
+        
+        // TODO: Implement parse_factor (LOGIKA PALING RUMIT ADA DI SINI)
+        //       Logika ini harus menangani chaining (misal: `get_array()[i]`)
+        //
+        // 1. Buat helper `parse_primary()` untuk menangani "atom" (unit terkecil):
+        //    - `Literal` (panggil `parse_literal_value()`)
+        //    - `Identifier` (HANYA identifier, kembalikan `Factor::Identifier`)
+        //    - `( expression )` (panggil `parse_expression()` rekursif)
+        //    - `tidak factor` (panggil `parse_factor()` rekursif)
+        //
+        // 2. Di `parse_factor()`:
+        //    a. Panggil `let mut factor = self.parse_primary()?`.
+        //    b. Masuk ke `loop`.
+        //    c. `if self.match_token(&[TokenType::LBracket])`:
+        //       - Parse `index = self.parse_expression()?`.
+        //       - `consume_token(RBracket)`.
+        //       - Bungkus `factor` yang ada: `factor = Factor::ArrayAccess(ArrayAccess { array: Box::new(factor_to_expr(factor)), index: Box::new(index) })`.
+        //         (Kita perlu helper `factor_to_expr` untuk konversi)
+        //    d. `else if self.check(TokenType::LParenthesis)`:
+        //       - Ubah `factor` dari `Factor::Identifier(name)` menjadi `Factor::FunctionCall`.
+        //       - Panggil `arguments = self.parse_argument_list()?`.
+        //       - `factor = Factor::FunctionCall(FunctionCallNode { function_name: name, arguments })`.
+        //    e. `else`: `break;`
+        //    f. Kembalikan `factor`.
 
-        match token.token_type {
-            TokenType::IntegerLiteral => {
-                let value = self.advance().value.parse::<i64>()
-                    .map_err(|_| self.error("Invalid integer literal"))?;
-                Ok(Expression::Literal(LiteralValue::Integer(value)))
-            }
+        unimplemented!("parse_factor dan parse_primary belum diimplementasikan")
+    }
 
-            TokenType::RealLiteral => {
-                let value = self.advance().value.parse::<f64>()
-                    .map_err(|_| self.error("Invalid real literal"))?;
-                Ok(Expression::Literal(LiteralValue::Real(value)))
-            }
+    // --- HELPER UNTUK PARSING FACTOR ---
 
-            TokenType::StringLiteral => {
-                let value = self.advance().value.clone();
-                let trimmed = value.trim_matches('\'');
-                Ok(Expression::Literal(LiteralValue::String(trimmed.to_string())))
-            }
-
-            TokenType::CharLiteral => {
-                let value = self.advance().value.clone();
-                let trimmed = value.trim_matches('\'');
-                let ch = trimmed.chars().next()
-                    .ok_or_else(|| self.error("Empty character literal"))?;
-                Ok(Expression::Literal(LiteralValue::Char(ch)))
-            }
-
-            TokenType::Keyword => {
-                let keyword = self.peek().value.to_lowercase();
-                if keyword == "benar" || keyword == "true" {
-                    self.advance();
-                    Ok(Expression::Literal(LiteralValue::Boolean(true)))
-                } else if keyword == "salah" || keyword == "false" {
-                    self.advance();
-                    Ok(Expression::Literal(LiteralValue::Boolean(false)))
-                } else {
-                    Err(self.error("Unexpected keyword in expression"))
-                }
-            }
-
-            TokenType::LogicalOperator => {
-                let op = self.peek().value.clone();
-                if op == "tidak" {
-                    self.advance();
-                    let operand = self.parse_factor()?;
-                    Ok(Expression::UnaryOp {
-                        operator: op,
-                        operand: Box::new(operand),
-                    })
-                } else {
-                    Err(self.error("Expected 'tidak' (not) operator"))
-                }
-            }
-
-            TokenType::Identifier => {
-                let name = self.advance().value.clone();
-                
-                // Check for array indexing
-                if self.check(TokenType::LBracket) {
-                    self.advance(); // consume '['
-                    let index = self.parse_expression()?;
-                    self.consume_token(TokenType::RBracket, "Expected ']' after array index")?;
-                    
-                    Ok(Expression::ArrayAccess {
-                        array: Box::new(Expression::Identifier(name)),
-                        index: Box::new(index),
-                    })
-                }
-                // Check for function call
-                else if self.check(TokenType::LParenthesis) {
-                    self.advance(); // consume '('
-                    let arguments = self.parse_argument_list()?;
-                    self.consume_token(TokenType::RParenthesis, "Expected ')' after arguments")?;
-                    
-                    Ok(Expression::FunctionCall {
-                        function_name: name,
-                        arguments,
-                    })
-                }
-                // Just an identifier
-                else {
-                    Ok(Expression::Identifier(name))
-                }
-            }
-
-            TokenType::LParenthesis => {
-                self.advance();
-                let expr = self.parse_expression()?;
-                self.consume_token(TokenType::RParenthesis, "Expected ')' after expression")?;
-                Ok(expr)
-            }
-
-            _ => {
-                Err(self.error("Expected expression"))
-            }
-        }
+    /// Meng-handle parsing literal '5', 'true', 'a', dll.
+    fn parse_literal_value(&mut self) -> Result<LiteralValue, SyntaxError> {
+        
+        // TODO: Implement parse_literal_value
+        // 1. `let token = self.advance()`.
+        // 2. `match token.token_type` untuk:
+        //    - `IntegerLiteral` -> `Literal::Integer(val.parse()?)`
+        //    - `RealLiteral` -> `Literal::Real(val.parse()?)`
+        //    - `StringLiteral` -> `Literal::String(val.trim_matches('\'')...)`
+        //    - `CharLiteral` -> `Literal::Char(val.trim_matches('\'').chars().next()?)`
+        //    - `Keyword` "benar" -> `Literal::Boolean(true)`
+        //    - `Keyword` "salah" -> `Literal::Boolean(false)`
+        //    - `_` -> `Err(...)`
+        // 3. Kembalikan `Ok(LiteralValue { value: Box::new(...) })`.
+        
+        unimplemented!("parse_literal_value belum diimplementasikan")
+    }
+    
+    /// Meng-handle parsing `( [expression (, expression)*] )`
+    pub(super) fn parse_argument_list(&mut self) -> Result<ParameterList, SyntaxError> {
+        
+        // TODO: Implement parse_argument_list (SESUAI REVISI 3)
+        // 1. `consume_token(LParenthesis)`.
+        // 2. Buat `expressions = Vec::new()`.
+        // 3. Cek jika `!self.check(RParenthesis)`.
+        // 4. Jika tidak kosong, masuk ke `loop`:
+        //    a. `expressions.push(self.parse_expression()?)`.
+        //    b. `if !self.match_token(Comma)` maka `break`.
+        //    c. (Opsional: cek `self.check(RParenthesis)` di sini untuk error "trailing comma")
+        // 5. `consume_token(RParenthesis)`.
+        // 6. Kembalikan `Ok(ParameterList { expressions })`.
+        
+        unimplemented!("parse_argument_list belum diimplementasikan")
     }
 }
