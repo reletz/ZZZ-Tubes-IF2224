@@ -91,24 +91,31 @@ impl PascalParser {
 	}
 
 	fn parse_program(&mut self) -> Result<Program, SyntaxError> {
-		self.consume_keyword("program", "Mengharapkan keyword 'program'.")?;
-		let program_name = self.consume_token(TokenType::Identifier, "Mengharapkan nama program.")?.value.clone();
-		self.consume_token(TokenType::Semicolon, "Mengharapkan ';' setelah nama program.")?;
-        let header = ProgramHeader { name: program_name };
+		
+		// 1. Parse <program-header>
+		// 'program' IDENTIFIER ';'
+		let program_kw = self.consume_keyword("program", "Mengharapkan keyword 'program'.")?.clone();
+		let name = self.consume_token(TokenType::Identifier, "Mengharapkan nama program.")?.clone();
+		let semicolon = self.consume_token(TokenType::Semicolon, "Mengharapkan ';' setelah nama program.")?.clone();
+        
+		let header = ProgramHeader { 
+			program_kw, 
+			name, 
+			semicolon 
+		};
 
-		// 2. Parse declaration-part
 		let declarations = self.parse_declaration_part()?;
 
-		// 3. Parse compound-statement
 		let body = self.parse_compound_statement()?;
 		
 		// 4. Parse DOT
-		self.consume_token(TokenType::Dot, "Mengharapkan '.' di akhir program.")?;
+		let dot = self.consume_token(TokenType::Dot, "Mengharapkan '.' di akhir program.")?.clone();
 
 		Ok(Program {
-			header: header,
-			declarations: declarations,
-			body: body,
+			header,
+			declarations,
+			body,
+			dot,
 		})
 	}
 }
