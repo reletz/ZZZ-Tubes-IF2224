@@ -43,7 +43,7 @@ fn main() {
             println!("Parsing Berhasil!\n");
             
             // Print AST
-            let mut printer = AstPrinter::new();
+            let mut printer = ParseTreePrinter::new();
             let tree_output = printer.print_program(&ast_tree);
             println!("{}", tree_output);
             
