@@ -1,4 +1,4 @@
-pub mod ast;
+pub mod parse_tree;
 pub mod error;
 
 pub mod parser;
