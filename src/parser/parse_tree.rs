@@ -169,6 +169,7 @@ pub struct StatementList {
     // (statement (SEMICOLON statement)*)?
     pub initial_stmt: Option<Box<Statement>>,
     pub rest: Vec<(Token, Box<Statement>)>, // (SEMICOLON, Statement)
+    pub trailing_semicolon: Option<Token>,
 }
 
 #[derive(Debug)]

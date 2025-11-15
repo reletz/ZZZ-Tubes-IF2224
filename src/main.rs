@@ -43,11 +43,11 @@ fn main() {
             println!("Parsing Berhasil!\n");
             
             // Print AST
-            // let mut printer = ParseTreePrinter::new();
-            // let tree_output = printer.print_program(&parse_tree);
-            // println!("{}", tree_output);
+            let mut printer = ParseTreePrinter::new();
+            let tree_output = printer.print_program(&parse_tree);
+            println!("{}", tree_output);
 
-            println!("{:#?}", parse_tree);
+            // println!("{:#?}", parse_tree);
         }
         Err(e) => {
             eprintln!("Parsing Gagal: {}", e);

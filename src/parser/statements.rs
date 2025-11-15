@@ -41,21 +41,24 @@ impl PascalParser {
         let mut initial_stmt = None;
         // 2. `let mut rest = Vec::new();`
         let mut rest = Vec::new();
+        // 3. `let mut trailing_semicolon = None;`
+        let mut trailing_semicolon = None;
         
-        // 3. `if is_terminator(self) { return Ok(StatementList { initial_stmt, rest }); }`
+        // 4. `if is_terminator(self) { return Ok(StatementList { initial_stmt, rest }); }`
         if is_terminator(self) {
-            return Ok(StatementList { initial_stmt, rest });
+            return Ok(StatementList { initial_stmt, rest, trailing_semicolon });
         }
         
-        // 4. `initial_stmt = Some(Box::new(self.parse_statement()?));` (Gunakan Box::new!)
+        // 5. `initial_stmt = Some(Box::new(self.parse_statement()?));` (Gunakan Box::new!)
         initial_stmt = Some(Box::new(self.parse_statement()?));
         
-        // 5. Loop `while self.check(TokenType::Semicolon)`:
+        // 6. Loop `while self.check(TokenType::Semicolon)`:
         while self.check(TokenType::Semicolon) {
             //    a. `let semi = self.advance().clone();`
             let semi = self.advance().clone();
             //    b. `if is_terminator(self) { break; }` (Handle trailing semicolon)
             if is_terminator(self) {
+                trailing_semicolon = Some(semi);
                 break;
             }
             //    c. `let stmt = Box::new(self.parse_statement()?);`
@@ -64,8 +67,8 @@ impl PascalParser {
             rest.push((semi, stmt));
         }
         
-        // 6. `Ok(StatementList { initial_stmt, rest })`
-        Ok(StatementList { initial_stmt, rest })
+        // 7. `Ok(StatementList { initial_stmt, rest })`
+        Ok(StatementList { initial_stmt, rest, trailing_semicolon })
     }
 
     /// 3. parse_compound_statement
