@@ -85,7 +85,7 @@ impl PascalParser {
     }
 
     /// 4. parse_if_statement
-    ///    'jika' <expression> 'maka' <statement> ['selain-itu' <statement>]
+    ///    'jika' <expression> 'maka' <statement> ['selain_itu' <statement>]
     fn parse_if_statement(&mut self) -> Result<IfStatement, SyntaxError> {
         // 1. `let if_kw = self.consume_keyword("jika", ...).clone()`
         let if_kw = self.consume_keyword("jika", "Mengharapkan 'jika'.")?.clone();
@@ -102,10 +102,10 @@ impl PascalParser {
     }
 
     /// 4a. parse_else_clause (Helper)
-    ///    'selain-itu' <statement>
+    ///    'selain_itu' <statement>
     fn parse_else_clause(&mut self) -> Result<Option<ElseClause>, SyntaxError> {
-        // 1. `if self.check_keyword("selain-itu")`:
-        if self.check_keyword("selain-itu") {
+        // 1. `if self.check_keyword("selain_itu")`:
+        if self.check_keyword("selain_itu") {
             //    a. `let else_kw = self.advance().clone()`
             let else_kw = self.advance().clone();
             //    b. `let statement = Box::new(self.parse_statement()?)`
@@ -134,7 +134,7 @@ impl PascalParser {
     }
 
     /// 6. parse_for_statement
-    ///    'untuk' ID ':=' <expression> ('ke' | 'turun-ke') <expression> 'lakukan' <statement>
+    ///    'untuk' ID ':=' <expression> ('ke' | 'turun_ke') <expression> 'lakukan' <statement>
     fn parse_for_statement(&mut self) -> Result<ForStatement, SyntaxError> {
         // 1. `let for_kw = self.consume_keyword("untuk", ...).clone()`
         let for_kw = self.consume_keyword("untuk", "Mengharapkan 'untuk'.")?.clone();
@@ -144,13 +144,13 @@ impl PascalParser {
         let assign_op = self.consume_token(TokenType::AssignOperator, "Mengharapkan ':='.")?.clone();
         // 4. `let start_value = self.parse_expression()?`
         let start_value = self.parse_expression()?;
-        // 5. `let direction_kw = ...` (Cek 'ke' atau 'turun-ke', consume, dan clone)
+        // 5. `let direction_kw = ...` (Cek 'ke' atau 'turun_ke', consume, dan clone)
         let direction_kw = if self.check_keyword("ke") {
             self.advance().clone()
-        } else if self.check_keyword("turun-ke") {
+        } else if self.check_keyword("turun_ke") {
             self.advance().clone()
         } else {
-            return Err(self.error("Mengharapkan 'ke' atau 'turun-ke'."));
+            return Err(self.error("Mengharapkan 'ke' atau 'turun_ke'."));
         };
         // 6. `let end_value = self.parse_expression()?`
         let end_value = self.parse_expression()?;
@@ -187,7 +187,7 @@ impl PascalParser {
     }
 
     /// 8. parse_case_statement
-    ///    'kasus' <expression> 'dari' <case-branch-list> ['selain-itu' <statement-list>] 'selesai'
+    ///    'kasus' <expression> 'dari' <case-branch-list> ['selain_itu' <statement-list>] 'selesai'
     fn parse_case_statement(&mut self) -> Result<CaseStatement, SyntaxError> {
         // 1. `let case_kw = self.consume_keyword("kasus", ...).clone()`
         let case_kw = self.consume_keyword("kasus", "Mengharapkan 'kasus'.")?.clone();
@@ -197,8 +197,8 @@ impl PascalParser {
         let of_kw = self.consume_keyword("dari", "Mengharapkan 'dari'.")?.clone();
         // 4. `let mut branches = Vec::new()`
         let mut branches = Vec::new();
-        // 5. Loop `while !self.check_keyword("selain-itu") && !self.check_keyword("selesai")`:
-        while !self.check_keyword("selain-itu") && !self.check_keyword("selesai") {
+        // 5. Loop `while !self.check_keyword("selain_itu") && !self.check_keyword("selesai")`:
+        while !self.check_keyword("selain_itu") && !self.check_keyword("selesai") {
             //    a. `branches.push(self.parse_case_branch()?)`
             branches.push(self.parse_case_branch()?);
         }
@@ -246,10 +246,10 @@ impl PascalParser {
     }
 
     /// 8c. parse_case_else_clause (Helper)
-    ///     'selain-itu' <statement-list>
+    ///     'selain_itu' <statement-list>
     fn parse_case_else_clause(&mut self) -> Result<Option<CaseElseClause>, SyntaxError> {
-        // 1. `if self.check_keyword("selain-itu")`:
-        if self.check_keyword("selain-itu") {
+        // 1. `if self.check_keyword("selain_itu")`:
+        if self.check_keyword("selain_itu") {
             //    a. `let else_kw = self.advance().clone()`
             let else_kw = self.advance().clone();
             //    b. `let statement_list = self.parse_statement_list(|p| p.check_keyword("selesai"))?`
@@ -281,19 +281,28 @@ impl PascalParser {
             Ok(Statement::Assignment(assign_stmt))
         // 3. `else`: (Harus Procedure Call)
         } else {
-            //    a. `match Self::expr_to_proc_call(left_expr)`:
-            match Self::expr_to_proc_call(left_expr) {
-                //       i. `Ok(call) => Ok(Statement::ProcedureCall(call))`
-                Ok(call) => Ok(Statement::ProcedureCall(call)),
-                //       ii. `Err(e) => Err(e)` (atau error baru yang lebih spesifik)
-                Err(e) => Err(e),
-            }
+            let call_statement_result = match self.expr_to_proc_call(left_expr) {
+            
+                // 2. Arm 'Ok' HANYA mengembalikan 'call' (tipe ProcedureCallStatement)
+                Ok(call) => Ok(call), 
+                
+                // 3. Arm 'Err' sekarang valid karena 'expr_to_proc_call' punya '&self'
+                Err(_) => Err(self.error(
+                    "Statement tidak valid. Mengharapkan ':=' atau pemanggilan prosedur."
+                )),
+            };
+
+            // 4. Ekstrak ProcedureCallStatement, ATAU return error jika gagal
+            let call_statement = call_statement_result?; 
+
+            // 5. Bungkus hasilnya ke dalam enum 'Statement'
+            Ok(Statement::ProcedureCall(call_statement))
         }
     }
 
     /// Helper: Try to convert an Expression to a ProcedureCallStatement
     /// Only succeeds if the expression is a plain function call (no operators)
-    fn expr_to_proc_call(expr: Expression) -> Result<ProcedureCallStatement, SyntaxError> {
+    fn expr_to_proc_call(&self, expr: Expression) -> Result<ProcedureCallStatement, SyntaxError> {
         // 1. Cek `expr.rest.is_empty()`
         if !expr.rest.is_empty() {
             return Err(SyntaxError::new(

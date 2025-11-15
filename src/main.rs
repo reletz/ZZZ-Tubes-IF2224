@@ -32,7 +32,7 @@ fn main() {
     // 3. LEXER
     let mut lexer = PascalLexer::new(&source_code);
     let tokens = lexer.get_all_tokens();
-    // for token in tokens {
+    // for token in &tokens {
     //     println!("{}", token);
     // }
 
@@ -42,7 +42,7 @@ fn main() {
         Ok(parse_tree) => {
             println!("Parsing Berhasil!\n");
             
-            // Print AST
+            // Print CST
             let mut printer = ParseTreePrinter::new();
             let tree_output = printer.print_program(&parse_tree);
             println!("{}", tree_output);
