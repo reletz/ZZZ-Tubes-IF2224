@@ -27,13 +27,13 @@ impl PascalParser {
     ///    <simple-expression> -> [sign] <term> ( <additive-operator> <term> )*
     fn parse_simple_expression(&mut self) -> Result<SimpleExpression, SyntaxError> {
         
-        let mut unary_op = None;
-        if self.check(TokenType::ArithmeticOperator) {
-            let op_val = self.peek().value.clone();
-            if op_val == "+" || op_val == "-" {
-                unary_op = Some(self.advance().clone());
-            }
-        }
+        // let mut unary_op = None;
+        // if self.check(TokenType::ArithmeticOperator) {
+        //     let op_val = self.peek().value.clone();
+        //     if op_val == "+" || op_val == "-" {
+        //         unary_op = Some(self.advance().clone());
+        //     }
+        // }
 
         let initial_term = self.parse_term()?;
         let mut rest = Vec::new();
@@ -54,7 +54,6 @@ impl PascalParser {
         }
         
         Ok(SimpleExpression {
-            unary_op,
             initial_term: Box::new(initial_term),
             rest,
         })
@@ -148,6 +147,14 @@ impl PascalParser {
         let token = self.peek();
 
         match token.token_type {
+            TokenType::ArithmeticOperator if (token.value == "+" || token.value == "-") => {
+            let op = self.advance().clone();
+            let factor = self.parse_factor()?; // Panggil rekursif
+            Ok(Factor::ArithmeticUnary(ArithmeticUnaryFactor {
+                op,
+                factor: Box::new(factor)
+            }))
+        }
             // Kasus Literal: 5, 3.14, 'hello', 'a', benar, salah
             TokenType::IntegerLiteral | TokenType::RealLiteral |
             TokenType::StringLiteral | TokenType::CharLiteral => {
@@ -196,7 +203,6 @@ impl PascalParser {
     fn factor_to_expression(&self, factor: Factor) -> Expression {
         Expression {
             initial_simple_expr: Box::new(SimpleExpression {
-                unary_op: None,
                 initial_term: Box::new(Term {
                     initial_factor: Box::new(factor),
                     rest: vec![]

@@ -278,9 +278,7 @@ pub struct Expression {
 
 #[derive(Debug)]
 pub struct SimpleExpression {
-    pub unary_op: Option<Token>, // ARITHMETIC_OPERATOR(+ atau -)
     pub initial_term: Box<Term>,
-    // (ADDITIVE_OPERATOR Term)*
     pub rest: Vec<(Token, Box<Term>)>, // (+, -, atau)
 }
 
@@ -292,6 +290,12 @@ pub struct Term {
 }
 
 #[derive(Debug)]
+pub struct ArithmeticUnaryFactor {
+    pub op: Token, // ARITHMETIC_OPERATOR(+ atau -)
+    pub factor: Box<Factor>,
+}
+
+#[derive(Debug)]
 pub enum Factor {
     Literal(LiteralValue),
     Identifier(Token), // IDENTIFIER(x)
@@ -299,6 +303,7 @@ pub enum Factor {
     ArrayAccess(ArrayAccess),
     Parenthesized(ParenthesizedExpression),
     Not(NotFactor),
+    ArithmeticUnary(ArithmeticUnaryFactor),
 }
 
 // --- Expression Components ---

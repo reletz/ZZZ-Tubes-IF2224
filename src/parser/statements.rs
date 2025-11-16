@@ -313,7 +313,7 @@ impl PascalParser {
         }
         
         // 2. Cek `expr.initial_simple_expr.unary_op.is_none()` dan `...rest.is_empty()`
-        if expr.initial_simple_expr.unary_op.is_some() || !expr.initial_simple_expr.rest.is_empty() {
+        if !expr.initial_simple_expr.rest.is_empty() {
             return Err(SyntaxError::new(
                 "Statement tidak valid. Mengharapkan ':=' atau pemanggilan prosedur.",
                 0,

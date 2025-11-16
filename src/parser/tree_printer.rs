@@ -616,14 +616,9 @@ impl ParseTreePrinter {
         let mut out = self.print_node("<simple-expression>", is_last);
         out += &with_indent!(self, is_last, {
             let mut body = String::new();
-            let has_op = expr.unary_op.is_some();
             let num_rest = expr.rest.len();
 
-            if let Some(op) = &expr.unary_op {
-                body += &self.print_terminal_token(op, false);
-            }
-            
-            body += &self.print_term(&expr.initial_term, !has_op && num_rest == 0);
+            body += &self.print_term(&expr.initial_term, num_rest == 0);
             
             for (i, (op, term)) in expr.rest.iter().enumerate() {
                 let is_item_last = i == num_rest - 1;
@@ -663,12 +658,20 @@ impl ParseTreePrinter {
                 Factor::ArrayAccess(acc) => self.print_array_access(acc, true),
                 Factor::Parenthesized(p) => self.print_parenthesized_expression(p, true),
                 Factor::Not(n) => self.print_not_factor(n, true),
+                Factor::ArithmeticUnary(u) => self.print_arithmetic_unary_factor(u, true),
             }
         });
         out
     }
 
     // --- Expression Helpers ---
+
+    fn print_arithmetic_unary_factor(&mut self, u: &ArithmeticUnaryFactor, is_last: bool) -> String {
+        let mut out = String::new();
+        out += &self.print_terminal_token(&u.op, false);
+        out += &self.print_factor(&u.factor, is_last);
+        out
+    }
 
     fn print_literal_value(&mut self, lit: &LiteralValue, is_last: bool) -> String {
         self.print_terminal_token(&lit.token, is_last)

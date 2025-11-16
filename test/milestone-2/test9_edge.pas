@@ -32,7 +32,7 @@ selesai;
 mulai
     a := -5;
     b := 10 - 5;
-    c := 10 - (-b);
+    c := 10 - -b;
     
     flag1 := tidak (a < b) dan (c > 0) atau (a = -5); 
     
