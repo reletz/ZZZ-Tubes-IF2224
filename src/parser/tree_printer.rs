@@ -95,14 +95,13 @@ impl ParseTreePrinter {
 
     pub fn print_program(&mut self, program: &Program) -> String {
         let mut out = self.print_node("<program>", true); // Root node
-        out += &with_indent!(self, false, { 
+        out += &with_indent!(self, true, { 
         let mut body = String::new();
-        // let num_children = 4; // header, declarations, body, dot
         
         body += &self.print_program_header(&program.header, false);
         body += &self.print_declaration_part(&program.declarations, false);
         body += &self.print_compound_statement(&program.body, false);
-        body += &self.print_terminal_token(&program.dot, true); // Anak terakhir
+        body += &self.print_terminal_token(&program.dot, true);
         
         body
     });
@@ -388,17 +387,19 @@ impl ParseTreePrinter {
     }
     
     fn print_statement_list(&mut self, list: &StatementList, is_last: bool) -> String {
+        let has_initial = list.initial_stmt.is_some();
+        
+        // Jika list kosong, jangan cetak node sama sekali
+        if !has_initial {
+            return String::new();
+        }
+        
         let mut out = self.print_node("<statement-list>", is_last);
         out += &with_indent!(self, is_last, {
             let mut body = String::new();
             
-            let has_initial = list.initial_stmt.is_some();
             let num_rest = list.rest.len();
             let has_trailing = list.trailing_semicolon.is_some();
-            
-            if !has_initial {
-                return body; // list kosong
-            }
 
             if let Some(initial) = &list.initial_stmt {
                 body += &self.print_statement(initial, num_rest == 0 && !has_trailing);
@@ -504,11 +505,9 @@ impl ParseTreePrinter {
         out += &with_indent!(self, is_last, {
             let call = &stmt.call;
             let mut body = String::new();
-            let has_args = call.arguments.is_some();
-            // let has_semicolon = stmt.semicolon.is_some();
             
             body += &self.print_terminal_token(&call.function_name, false);
-            body += &self.print_terminal_token(&call.l_paren, !has_args);
+            body += &self.print_terminal_token(&call.l_paren, false);
             
             if let Some(args) = &call.arguments {
                 body += &self.print_actual_parameter_list(args, false);
@@ -538,20 +537,17 @@ impl ParseTreePrinter {
         let mut out = self.print_node("<case-statement>", is_last);
         out += &with_indent!(self, is_last, {
             let mut body = String::new();
-            let num_branches = stmt.branches.len();
-            let has_else = stmt.else_clause.is_some();
             
             body += &self.print_terminal_token(&stmt.case_kw, false);
             body += &self.print_expression(&stmt.expression, false);
-            body += &self.print_terminal_token(&stmt.of_kw, num_branches == 0 && !has_else);
+            body += &self.print_terminal_token(&stmt.of_kw, false);
             
-            for (i, branch) in stmt.branches.iter().enumerate() {
-                let is_branch_last = i == num_branches - 1;
-                body += &self.print_case_branch(branch, is_branch_last && !has_else);
+            for branch in &stmt.branches {
+                body += &self.print_case_branch(branch, false);
             }
             
             if let Some(else_c) = &stmt.else_clause {
-                body += &self.print_case_else_clause(else_c, true);
+                body += &self.print_case_else_clause(else_c, false);
             }
             
             body += &self.print_terminal_token(&stmt.end_kw, true);
