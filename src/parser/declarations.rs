@@ -1,6 +1,6 @@
 use super::parser::PascalParser;
 use super::parse_tree::*;
-use crate::lexer::token_types::{Token, TokenType};
+use crate::lexer::token_types::TokenType;
 use super::error::SyntaxError;
 
 impl PascalParser {

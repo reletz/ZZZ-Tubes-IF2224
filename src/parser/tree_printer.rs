@@ -1,6 +1,5 @@
 use super::parse_tree::*;
 use crate::lexer::token_types::Token;
-use crate::lexer::token_types::TokenType;
 
 pub struct ParseTreePrinter {
     indent_level: usize,

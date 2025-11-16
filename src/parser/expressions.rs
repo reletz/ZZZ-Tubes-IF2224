@@ -44,7 +44,7 @@ impl PascalParser {
                 let op_token = self.advance().clone();
                 let term = self.parse_term()?;
                 rest.push((op_token, Box::new(term)));
-            } else if self.check_keyword("atau") {
+            } else if self.check(TokenType::LogicalOperator) && self.peek().value.to_lowercase() == "atau" {
                 let op_token = self.advance().clone();
                 let term = self.parse_term()?;
                 rest.push((op_token, Box::new(term)));
@@ -75,7 +75,7 @@ impl PascalParser {
                 let op_token = self.advance().clone();
                 let factor = self.parse_factor()?;
                 rest.push((op_token, Box::new(factor)));
-            } else if self.check_keyword("dan") {
+            } else if self.check(TokenType::LogicalOperator) && self.peek().value.to_lowercase() == "dan" {
                 let op_token = self.advance().clone();
                 let factor = self.parse_factor()?;
                 rest.push((op_token, Box::new(factor)));
@@ -160,7 +160,7 @@ impl PascalParser {
             }
 
             // Kasus 'tidak' (not)
-            TokenType::Keyword if self.check_keyword("tidak") => {
+            TokenType::LogicalOperator if self.peek().value.to_lowercase() == "tidak"  => {
                 let not_token = self.advance().clone(); // consume 'tidak'
                 let factor = self.parse_factor()?; // Panggil rekursif
                 Ok(Factor::Not(NotFactor {

@@ -39,16 +39,6 @@ impl PascalParser {
 		self.peek().token_type == token_type
 	}
 
-	pub(super) fn match_token(&mut self, types: &[TokenType]) -> bool {
-		for token_type in types {
-			if self.check(*token_type) {
-				self.advance();
-				return true;
-			}
-		} 
-		false
-	}
-
 	pub(super) fn error(&self, message: &str) -> SyntaxError {
 		let token = self.peek();
 		SyntaxError::new(message.to_string(), token.line, token.column)
@@ -59,15 +49,6 @@ impl PascalParser {
 			return false;
 		}
 		self.peek().value.to_lowercase() == value
-	}
-
-	pub(super) fn match_keyword(&mut self, values: &[&str]) -> bool {
-		for &value in values {
-			if self.check_keyword(value) {
-				self.advance();
-				return true;
-			}
-		} false
 	}
 
 	pub(super) fn consume_keyword(&mut self, value: &str, message: &str) -> Result<&Token, SyntaxError> {
