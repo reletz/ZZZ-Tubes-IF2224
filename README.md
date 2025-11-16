@@ -29,7 +29,7 @@ Compiler ini terdiri dari beberapa tahapan:
    - Tipe data (integer, real, boolean, string)
    - Literal konstanta (angka, string dalam quotes)
    - Delimiter dan separator (, ; . () [])
-   - Penanganan whitespace dan komentar
+   - Penanganan whitespace
    - Error handling untuk karakter tidak valid
 
    Token yang dihasilkan memiliki format:
@@ -46,7 +46,7 @@ Compiler ini terdiri dari beberapa tahapan:
    SEMICOLON(;)
    ```
 
-2. **Syntax Analysis (Parser)** - Membangun Abstract Syntax Tree (AST)
+2. **Syntax Analysis (Parser)** - Membangun Concrete Syntax Tree (CST/Parse Tree)
 
    Parser diimplementasikan menggunakan Recursive Descent Parser dengan fitur:
 
@@ -54,7 +54,7 @@ Compiler ini terdiri dari beberapa tahapan:
    - Deklarasi variabel dengan tipe data
    - Statement parsing (compound statements, expressions)
    - Error handling dengan line/column tracking
-   - AST generation untuk representasi struktural program
+   - Parse Tree/CST generation untuk representasi struktural program
 
    **Parser Call Tree**:
 
@@ -95,7 +95,7 @@ Compiler ini terdiri dari beberapa tahapan:
 ## Cara Instalasi
 
 ```bash
-git clone https://github.com/username/ZZZ-Tubes-IF2224.git
+git clone https://github.com/reletz/ZZZ-Tubes-IF2224.git
 cd ZZZ-Tubes-IF2224
 cargo build --release
 ```
@@ -120,7 +120,7 @@ List token dalam format `TOKEN_TYPE(value)`
 
 ### Milestone 2 - Parser
 
-**Menguji parser dengan output AST:**
+**Menguji parser dengan output Parse Tree/CST:**
 
 ```bash
 cargo run -- test/milestone-2/test4_array_func.pas
@@ -132,9 +132,9 @@ File Pascal-S dengan ekstensi `.pas` menggunakan keyword Bahasa Indonesia.
 
 #### **Format Output**
 
-Parser menghasilkan **dua representasi AST**:
+Parser menghasilkan **dua representasi Parse Tree**:
 
-##### **1. Tree-Style AST (Default Output)**
+##### **1. Tree-Style Parse Tree (Default Output)**
 
 ```
 <program>
@@ -148,7 +148,7 @@ Parser menghasilkan **dua representasi AST**:
 └── DOT(.)
 ```
 
-##### **2. Raw AST (Debug Format)**
+##### **2. Raw CST (Debug Format)**
 
 ```rust
 Program {
@@ -160,76 +160,105 @@ Program {
 }
 ```
 
-**Untuk menampilkan raw AST**, uncomment di [`main.rs`](src/main.rs):
+**Untuk menampilkan raw CST**, uncomment di [`main.rs`](src/main.rs):
 
 ```rust
-println!("{:#?}", ast_tree);
+println!("{:#?}", parse_tree);
 ```
 
 ## Struktur Project
 
 ```
-├── src/                    # Source code utama (Rust)
-│   ├── main.rs             # Main entry point
-│   ├── lexer/             # Lexical analyzer
-│   │   ├── mod.rs         # Lexer module definition
-│   │   ├── lexer.rs       # Core lexer implementation
-│   │   ├── dfa.rs         # DFA state machine
-│   │   └── token_types.rs # Token type definitions
-│   ├── parser/            # Syntax analyzer
-│   │   ├── mod.rs         # Parser module definition
-│   │   ├── parser.rs      # Core parser implementation
-│   │   ├── ast.rs         # AST node definitions
-│   │   ├── declarations.rs # Declaration parsing
-│   │   ├── statements.rs  # Statement parsing
-│   │   ├── expressions.rs # Expression parsing
-│   │   └── error.rs       # Error handling
-│   ├── semantic_analyzer/ # Semantic analyzer (future)
-│   ├── code_generator/    # Code generator (future)
-│   ├── interpreter/       # Interpreter (future)
-│   └── utils/            # Utility functions
-├── examples/              # Contoh program Pascal-S
-│   ├── hello.pas         # Program "Hello World"
-│   ├── comment_test.pas  # Test case untuk komentar
-│   └── comprehensive_test.pas # Test case komprehensif
-├── test/                 # Test cases
-│   ├── integration/      # Integration tests
-│   ├── milestone-1/      # Lexer test cases
-│   │   ├── test1_simple.pas
-│   │   ├── test2_operators.pas
-│   │   ├── test3_strings_chars.pas
-│   │   ├── test4_comments.pas
-│   │   ├── test5_arrays_range.pas
-│   │   └── expected_output_hello.txt
-│   ├── milestone-2/      # Parser tests (future)
-│   ├── milestone-3/      # Semantic tests (future)
-│   ├── milestone-4/      # Code gen tests (future)
-│   └── milestone-5/      # Interpreter tests (future)
-├── config/               # Configuration files
-│   └── dfa.json         # DFA state transition table
-├── doc/                 # Documentation
-├── scripts/             # Utility scripts
-├── Cargo.toml           # Rust project & dependency config
-├── Cargo.lock           # Dependency lock file
-├── .gitignore          # Git ignore rules
-└── README.md           # Project documentation
+ZZZ-Tubes-IF2224
+├── Cargo.lock
+├── Cargo.toml
+├── config
+│   └── dfa.json
+├── doc
+│   ├── Diagram-1-ZZZ.png
+│   ├── Laporan-1-ZZZ.pdf
+│   └── Laporan-2-ZZZ.pdf
+├── examples
+│   ├── comment_test.pas
+│   ├── comprehensive_test.pas
+│   └── hello.pas
+├── LICENSE
+├── README.md
+├── scripts
+├── src
+│   ├── code_generator
+│   ├── interpreter
+│   ├── lexer
+│   │   ├── dfa.rs
+│   │   ├── lexer.rs
+│   │   ├── mod.rs
+│   │   └── token_types.rs
+│   ├── main.rs
+│   ├── parser
+│   │   ├── declarations.rs
+│   │   ├── error.rs
+│   │   ├── expressions.rs
+│   │   ├── mod.rs
+│   │   ├── parser.rs
+│   │   ├── parse_tree.rs
+│   │   ├── statements.rs
+│   │   └── tree_printer.rs
+│   ├── semantic_analyzer
+│   └── utils
+└── test
+    ├── integration
+    ├── milestone-1
+    │   ├── expected_output_hello.txt
+    │   ├── test1_simple.pas
+    │   ├── test2_operators.pas
+    │   ├── test3_strings_chars.pas
+    │   ├── test4_comments.pas
+    │   ├── test5_arrays_range.pas
+    │   ├── test_hello.pas
+    │   └── test_testLexer.pas
+    ├── milestone-2
+    │   ├── expected_output_expression.txt
+    │   ├── test1_expression.pas
+    │   ├── test2_literals.pas
+    │   ├── test3_all_ops.pas
+    │   ├── test4_array_func.pas
+    │   ├── test5_procedure.pas
+    │   ├── test6_error.pas
+    │   ├── test7_nested_loop.pas
+    │   ├── test8_switch_case.pas
+    │   └── test9_edge.pas
+    ├── milestone-3
+    ├── milestone-4
+    └── milestone-5
 ```
 
 ## Pembagian Tugas
+
+### Milestone 1
 
 | Nama                     | NIM      | Tugas                                           |
 | ------------------------ | -------- | ----------------------------------------------- |
 | Ahmad Syafiq             | 13523135 | README & License                                |
 | Frederiko Eldad Mugiyono | 13523147 | Test Case dan Pengujian                         |
 | Naufarrel Zhafif Abhista | 13523149 | Implementasi DFA (Kode dan Aturannya) dan Lexer |
-| I Made Wiweka Putera     | 13523156 | Diagram DFA                                     |
 | Hasri Fayadh Muqaffa     | 13523160 | Laporan                                         |
+| I Made Wiweka Putera     | 13523160 | Diagram DFA                                     |
+
+### Milestone 2
+
+| Nama                     | NIM      | Tugas                                           |
+| ------------------------ | -------- | ----------------------------------------------- |
+| Ahmad Syafiq             | 13523135 | Declarations                               |
+| Frederiko Eldad Mugiyono | 13523147 | Statements                      |
+| Naufarrel Zhafif Abhista | 13523149 | Parse Tree (Node), Parser |
+| Hasri Fayadh Muqaffa     | 13523156 | Tree Printer                                         |
+| I Made Wiweka Putera     | 13523160 | Expressions, Statements                                     |
 
 ## Milestone Progress
 
 - [x] Project Structure Setup
 - [x] **Milestone 1**: Lexer Implementation (Deadline: 19 Oktober 2025)
-- [ ] **Milestone 2**: Parser Implementation
+- [x] **Milestone 2**: Parser Implementation
 - [ ] **Milestone 3**: Semantic Analysis
 - [ ] **Milestone 4**: Intermediate Code Generation
 - [ ] **Milestone 5**: Interpreter
