@@ -351,7 +351,7 @@ impl ParseTreePrinter {
             let mut body = String::new();
             body += &self.print_terminal_token(&decl.larik_kw, false);
             body += &self.print_terminal_token(&decl.l_bracket, false);
-            body += &self.print_range(&decl.range, false);
+            body += &self.print_type(&decl.index_type, false);
             body += &self.print_terminal_token(&decl.r_bracket, false);
             body += &self.print_terminal_token(&decl.dari_kw, false);
             body += &self.print_type(&decl.base_type, true);

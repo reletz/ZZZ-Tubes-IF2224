@@ -391,7 +391,7 @@ impl PascalParser {
         let l_bracket = self.consume_token(TokenType::LBracket, "Mengharapkan '[' setelah 'larik'.")?.clone();
         
         // 3. `let range = Box::new(self.parse_range()?)`
-        let range = Box::new(self.parse_range()?);
+        let index_type = Box::new(self.parse_type_spec()?);
         
         // 4. `let r_bracket = self.consume_token(TokenType::RBracket, ...).clone()`
         let r_bracket = self.consume_token(TokenType::RBracket, "Mengharapkan ']' setelah range larik.")?.clone();
@@ -406,7 +406,7 @@ impl PascalParser {
         Ok(Type::Array(ArrayType {
             larik_kw,
             l_bracket,
-            range,
+            index_type,
             r_bracket,
             dari_kw,
             base_type,

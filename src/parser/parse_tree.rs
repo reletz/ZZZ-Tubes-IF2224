@@ -137,7 +137,7 @@ pub enum Type {
 pub struct ArrayType {
     pub larik_kw: Token,    // KEYWORD(larik)
     pub l_bracket: Token,   // LBRACKET([)
-    pub range: Box<Range>,
+    pub index_type: Box<Type>,
     pub r_bracket: Token,   // RBRACKET(])
     pub dari_kw: Token,     // KEYWORD(dari)
     pub base_type: Box<Type>,
