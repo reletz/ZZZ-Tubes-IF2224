@@ -4,10 +4,13 @@ use std::process;
 
 mod lexer;
 mod parser;
+mod semantic_analyzer;
 
 use lexer::lexer::PascalLexer;
 use parser::parser::PascalParser;
-use parser::tree_printer::ParseTreePrinter;
+
+use semantic_analyzer::ast::ast_builder::ASTBuilder;
+use semantic_analyzer::analyzer::SemanticAnalyzer;
 
 fn main() {
     // 1. Parse command-line arguments
@@ -38,23 +41,45 @@ fn main() {
 
     // 4. PARSER
     let mut parser = PascalParser::new(tokens);
-    match parser.parse() {
-        Ok(parse_tree) => {
-            println!("Parsing Berhasil!\n");
-            
-            // Print CST
-            let mut printer = ParseTreePrinter::new();
-            let tree_output = printer.print_program(&parse_tree);
-            println!("{}", tree_output);
-
-            // println!("{:#?}", parse_tree);
+    let parse_tree = match parser.parse() {
+        Ok(pt) => {
+            println!(">> Parsing Berhasil!");
+            pt
         }
         Err(e) => {
-            eprintln!("Parsing Gagal: {}", e);
+            eprintln!(">> Parsing Gagal: {}", e);
+            process::exit(1);
+        }
+    };
+
+    // pass ast_tree ke Semantic Analyzer
+    println!(">> Membangun Abstract Syntax Tree (AST)...");
+    let ast = match ASTBuilder::build(&parse_tree) {
+        Ok(ast) => {
+            println!(">> AST Berhasil dibangun.");
+            // println!("{:#?}", ast);
+            ast
+        },
+        Err(e) => {
+            eprintln!(">> Gagal membangun AST (Semantic Error di Builder): {}", e);
+            process::exit(1);
+        }
+    };
+
+    // 5. SEMANTIC ANALYZER (Type Check & Symbol Table)
+    let mut analyzer = SemanticAnalyzer::new();
+    
+    match analyzer.analyze(&ast) {
+        Ok(_) => {
+            println!(">> Analisis Semantik BERHASIL!");
+            
+            // Opsional: Print Symbol Table untuk membuktikan kebenaran
+            // println!(">> Symbol Table State:");
+            // println!("{:#?}", analyzer.symbol_table);
+        },
+        Err(e) => {
+            eprintln!(">> Semantic Error: {}", e);
             process::exit(1);
         }
     }
-
-    // TODO: Milestone 3
-    // pass ast_tree ke Semantic Analyzer
 }
