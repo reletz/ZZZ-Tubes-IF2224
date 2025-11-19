@@ -1,9 +1,24 @@
-pub struct ProgramAST {
-    pub name: String,
-    pub declarations: Vec<Decl>, // Semua deklarasi (const, type, var, func)
-    pub main_body: BlockStmt,    // Blok 'mulai' ... 'selesai' utama
+#[derive(Debug, Clone, PartialEq)] 
+pub struct SemanticData {
+    pub type_kind: Option<TypeKind>,
+    pub tab_index: Option<usize>,
+    pub is_const: bool, 
 }
 
+impl SemanticData {
+    pub fn new() -> Self {
+        Self { type_kind: None, tab_index: None, is_const: false }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ProgramAST {
+    pub name: String,
+    pub declarations: Vec<Decl>,
+    pub main_body: BlockStmt,
+}
+
+#[derive(Debug, Clone)]
 pub enum Decl {
     Constant {
         name: String,
@@ -32,13 +47,14 @@ pub enum Decl {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Param {
     pub names: Vec<String>,
     pub type_kind: TypeKind,
     pub is_var: bool
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TypeKind {
     Integer,
     Real,
@@ -53,6 +69,7 @@ pub enum TypeKind {
     }
 }
 
+#[derive(Debug, Clone)]
 pub enum Stmt {
     Assignment {
         target: Expr,
@@ -90,21 +107,31 @@ pub enum Stmt {
     Compound(BlockStmt)
 }
 
+#[derive(Debug, Clone)]
 pub struct BlockStmt {
     pub statements: Vec<Stmt>
 }
 
+#[derive(Debug, Clone)]
 pub struct CaseBranch {
     pub labels: Vec<Expr>,
     pub stmt: Stmt
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum ForDirection {
     To,
     Downto,
 }
 
-pub enum Expr {
+#[derive(Debug, Clone, PartialEq)]
+pub struct Expr {
+    pub kind: ExprKind,
+    pub annotation: SemanticData,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ExprKind {
     Binary {
         left: Box<Expr>,
         op: BinOp,
@@ -120,9 +147,9 @@ pub enum Expr {
     LiteralString(String),
     LiteralChar(char),
     LiteralBool(bool),
-    
+
     Variable(String),
-    
+
     ArrayAccess {
         array: Box<Expr>,
         index: Box<Expr>
@@ -133,5 +160,17 @@ pub enum Expr {
     }
 }
 
+impl Expr {
+    pub fn new(kind: ExprKind) -> Self {
+        Expr {
+            kind,
+            annotation: SemanticData::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)] // <-- Tambahkan ini
 pub enum BinOp { Add, Sub, Mul, DivReal, DivInt, Mod, And, Or, Eq, Neq, Lt, Gt, Lte, Gte }
+
+#[derive(Debug, Clone, PartialEq)] // <-- Tambahkan ini
 pub enum UnOp { Plus, Neg, Not }

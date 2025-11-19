@@ -82,7 +82,7 @@ impl ASTBuilder {
             
             cst::Type::Array(arr) => {
                 ast::TypeKind::Array {
-                    index_type: Box::new(Self::build_type(&arr.index_type)),
+                    index_range: Box::new(Self::build_type(&arr.index_type)),
                     element_type: Box::new(Self::build_type(&arr.base_type)),
                 }
             },
@@ -261,11 +261,12 @@ impl ASTBuilder {
         
         for (op, right_simple) in &expr.rest {
             let right = Self::build_simple_expr(right_simple);
-            left = ast::Expr::Binary {
+            let kind = ast::ExprKind::Binary {
                 left: Box::new(left),
                 op: Self::map_bin_op(&op.value),
                 right: Box::new(right),
             };
+            left = ast::Expr::new(kind);
         }
         left
     }
@@ -275,11 +276,12 @@ impl ASTBuilder {
         
         for (op, right_term) in &simple.rest {
             let right = Self::build_term(right_term);
-            left = ast::Expr::Binary {
+            let kind = ast::ExprKind::Binary {
                 left: Box::new(left),
                 op: Self::map_bin_op(&op.value),
                 right: Box::new(right),
             };
+            left = ast::Expr::new(kind);
         }
         left
     }
@@ -289,53 +291,54 @@ impl ASTBuilder {
         
         for (op, right_factor) in &term.rest {
             let right = Self::build_factor(right_factor);
-            left = ast::Expr::Binary {
+            let kind = ast::ExprKind::Binary {
                 left: Box::new(left),
                 op: Self::map_bin_op(&op.value),
                 right: Box::new(right),
             };
+            left = ast::Expr::new(kind);
         }
         left
     }
 
     fn build_factor(factor: &cst::Factor) -> ast::Expr {
-        match factor {
+        let kind = match factor {
             cst::Factor::Literal(lit) => {
                 match lit.token.token_type {
                     TokenType::IntegerLiteral => {
-                        ast::Expr::LiteralInt(lit.token.value.parse().unwrap_or(0))
+                        ast::ExprKind::LiteralInt(lit.token.value.parse().unwrap_or(0))
                     },
                     TokenType::RealLiteral => {
-                        ast::Expr::LiteralReal(lit.token.value.parse().unwrap_or(0.0))
+                        ast::ExprKind::LiteralReal(lit.token.value.parse().unwrap_or(0.0))
                     },
                     TokenType::StringLiteral => {
                         let s = lit.token.value.trim_matches('\'').to_string();
-                        ast::Expr::LiteralString(s)
+                        ast::ExprKind::LiteralString(s)
                     },
                     TokenType::CharLiteral => {
                         let c = lit.token.value.trim_matches('\'').chars().next().unwrap_or('\0');
-                        ast::Expr::LiteralChar(c)
+                        ast::ExprKind::LiteralChar(c)
                     },
-                    TokenType::Keyword if lit.token.value == "benar" => ast::Expr::LiteralBool(true),
-                    TokenType::Keyword if lit.token.value == "salah" => ast::Expr::LiteralBool(false),
+                    TokenType::Keyword if lit.token.value == "benar" => ast::ExprKind::LiteralBool(true),
+                    TokenType::Keyword if lit.token.value == "salah" => ast::ExprKind::LiteralBool(false),
                     _ => panic!("Unknown literal type"),
                 }
             },
             cst::Factor::Identifier(tok) => {
-                ast::Expr::Variable(tok.value.clone())
+                ast::ExprKind::Variable(tok.value.clone())
             },
             cst::Factor::Parenthesized(paren) => {
-                Self::build_expr(&paren.expr)
+                return Self::build_expr(&paren.expr);
             },
             cst::Factor::Not(not_factor) => {
-                ast::Expr::Unary {
+                ast::ExprKind::Unary {
                     op: ast::UnOp::Not,
                     operand: Box::new(Self::build_factor(&not_factor.factor))
                 }
             },
             cst::Factor::ArithmeticUnary(unary) => {
                 let op = if unary.op.value == "+" { ast::UnOp::Plus } else { ast::UnOp::Neg };
-                ast::Expr::Unary {
+                ast::ExprKind::Unary {
                     op,
                     operand: Box::new(Self::build_factor(&unary.factor))
                 }
@@ -346,18 +349,20 @@ impl ASTBuilder {
                 } else {
                     Vec::new()
                 };
-                ast::Expr::FunctionCall {
+                ast::ExprKind::FunctionCall {
                     name: call_node.function_name.value.clone(),
                     args
                 }
             },
             cst::Factor::ArrayAccess(access) => {
-                ast::Expr::ArrayAccess {
+                ast::ExprKind::ArrayAccess {
                     array: Box::new(Self::build_expr(&access.array)),
                     index: Box::new(Self::build_expr(&access.index)),
                 }
             }
-        }
+        };
+        
+        ast::Expr::new(kind)
     }
 
     fn build_arg_list(list: &cst::ActualParameterList) -> Vec<ast::Expr> {
