@@ -45,9 +45,10 @@ pub enum TypeKind {
     Boolean,
     Char,
     String,
-    Custom(String), 
+    Custom(String),
+    Subrange(Box<Expr>, Box<Expr>),
     Array {
-        index_range: (i32, i32), // low .. high
+        index_range: Box<TypeKind>,
         element_type: Box<TypeKind>
     }
 }
