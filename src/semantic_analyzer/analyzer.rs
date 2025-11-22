@@ -26,9 +26,11 @@ impl SemanticAnalyzer {
     // ==========================================
     fn visit_program(&mut self, program: &ProgramAST) -> Result<(), SemanticError> {
         // 1. Init Global Scope
-        // TODO: self.symbol_table.enter_scope() untuk level 0 (jika perlu)
+        self.symbol_table.enter_scope();
         
         // 2. Masukkan identifier program ke tabel
+        // Kita masukkan sebagai Constant dengan tipe Void karena tidak punya nilai runtime.
+        self.symbol_table.enter(&program.name, ObjectKind::Constant, TypeKind::Void, 0)?;
         
         // 3. Visit semua deklarasi global
         self.visit_decls(&program.declarations)?;
@@ -37,7 +39,7 @@ impl SemanticAnalyzer {
         self.visit_block(&program.main_body)?;
         
         // 5. Exit Scope
-        // TODO: self.symbol_table.exit_scope()
+        self.symbol_table.exit_scope();
         
         Ok(())
     }
@@ -52,52 +54,84 @@ impl SemanticAnalyzer {
     fn visit_decl(&mut self, decl: &Decl) -> Result<(), SemanticError> {
         match decl {
             Decl::Constant { name, value } => {
-                // TODO:
-                // 1. Evaluasi nilai konstanta (harus constant expression)
-                // 2. Masukkan ke tabel: self.symbol_table.enter(name, ObjectKind::Constant, type, value)
+                // 1. Evaluasi nilai konstanta untuk dapat tipenya
+                let mut expr_clone = value.clone();
+                let type_kind = self.visit_expr(&mut expr_clone)?;
+
+                // 2. Masukkan ke tabel
+                self.symbol_table.enter(name, ObjectKind::Constant, type_kind, 0)?;
                 Ok(())
             },
             Decl::Type { name, wrapped_type } => {
-                // TODO:
-                // 1. Validasi tipe data
-                // 2. Masukkan ke tabel: ObjectKind::Type
+                // 1. Masukkan ke tabel sebagai Type Alias
+                self.symbol_table.enter(name, ObjectKind::Type, wrapped_type.clone(), 0)?;
                 Ok(())
             },
             Decl::Variable { name, type_kind } => {
-                // TODO:
-                // 1. Validasi tipe data (pastikan tipe ada)
-                // 2. Loop vector 'name'
-                // 3. Untuk setiap nama: self.symbol_table.enter(n, ObjectKind::Variable, type_idx, address)
-                // 4. Update address counter (adr)
+                // 1. Validasi tipe data
+                if *type_kind == TypeKind::Void {
+                    return Err(SemanticError::new(SemanticErrorKind::TypeMismatch, "Variable cannot be Void"));
+                }
+
+                // 2. Loop vector 'name' dan masukkan ke tabel
+                for var_name in name {
+                    self.symbol_table.enter(var_name, ObjectKind::Variable, type_kind.clone(), 0)?;
+                }
                 Ok(())
             },
             Decl::Procedure { name, params, local_decls, body } => {
-                // TODO:
-                // 1. Masukkan nama prosedur ke tabel (ObjectKind::Procedure) di scope parent
-                // 2. self.symbol_table.enter_scope() -> Naik level
-                // 3. Visit parameters (masukkan ke tabel sebagai variabel lokal/param)
-                // 4. Visit local_decls
-                // 5. Visit body (block stmt)
-                // 6. self.symbol_table.exit_scope()
+                // 1. Masukkan nama prosedur ke tabel parent
+                self.symbol_table.enter(name, ObjectKind::Procedure, TypeKind::Void, 0)?;
+
+                // 2. Naik level (Scope Baru)
+                self.symbol_table.enter_scope();
+
+                // 3. Visit parameters
+                for param in params {
+                    self.visit_param(param)?;
+                }
+
+                // 4. Visit local_decls & body
+                self.visit_decls(local_decls)?;
+                self.visit_block(body)?;
+
+                // 6. Exit Scope
+                self.symbol_table.exit_scope();
                 Ok(())
             },
             Decl::Function { name, params, return_type, local_decls, body } => {
-                // TODO:
-                // Sama seperti Procedure, tapi set return type di tabel simbol
-                // Pastikan tipe return valid
+                // 1. Masukkan nama fungsi ke tabel parent
+                self.symbol_table.enter(name, ObjectKind::Function, return_type.clone(), 0)?;
+
+                // 2. Naik level (Scope Baru)
+                self.symbol_table.enter_scope();
+
+                // 3. Visit parameters
+                for param in params {
+                    self.visit_param(param)?;
+                }
+
+                // PENTING: Masukkan nama fungsi sebagai variabel lokal untuk return value assignment
+                self.symbol_table.enter(name, ObjectKind::Variable, return_type.clone(), 0)?;
+
+                // 4. Visit local_decls & body
+                self.visit_decls(local_decls)?;
+                self.visit_block(body)?;
+
+                // 6. Exit Scope
+                self.symbol_table.exit_scope();
                 Ok(())
             }
         }
     }
 
     fn visit_param(&mut self, param: &Param) -> Result<(), SemanticError> {
-        // TODO:
-        // 1. Resolve tipe data param
-        // 2. Loop nama param
-        // 3. Masukkan ke tabel. 
-        // PENTING: Cek param.is_var
-        // Jika is_var == true -> set normal = false (Pass by Reference)
-        // Jika is_var == false -> set normal = true (Pass by Value)
+        let type_kind = &param.type_kind;
+
+        for param_name in &param.names {
+            // Masukkan parameter sebagai variabel lokal
+            self.symbol_table.enter(param_name, ObjectKind::Variable, type_kind.clone(), 0)?;
+        }
         Ok(())
     }
 
