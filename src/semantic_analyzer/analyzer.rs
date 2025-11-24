@@ -217,48 +217,172 @@ impl SemanticAnalyzer {
     fn visit_stmt(&mut self, stmt: &Stmt) -> Result<(), SemanticError> {
         match stmt {
             Stmt::Assignment { target, value } => {
-                // TODO:
-                // 1. visit_expr(target) & visit_expr(value)
-                // 2. Cek apakah target adalah l-value (bisa diisi, bukan konstanta)
-                //    - Cek target.annotation.tab_index -> lihat di tab -> pastikan obj != Constant
-                // 3. Cek Compatibility: Tipe target == Tipe value
-                // 4. Error jika beda tipe
+                // Evaluasi Tipe
+                let target_type = self.visit_expr(target)?;
+                let value_type = self.visit_expr(value)?;
+
+                // Cek apakah target adalah variabel?
+                if let Some(idx) = target.annotation.tab_index {
+                    if let Some(entry) = self.symbol_table.get(idx) {
+                        if entry.kind == ObjectKind::Constant {
+                            return Err(SemanticError::new(
+                                SemanticErrorKind::IllegalAssignment,
+                                format!("Error: Konstanta '{}' tidak dapat diubah nilainya.", entry.name).as_str()
+                            ));
+                        }
+                        if entry.kind == ObjectKind::Procedure {
+                            return Err(SemanticError::new(
+                                SemanticErrorKind::IllegalAssignment,
+                                format!("Error: Tidak dapat melakukan assignment pada nama prosedur '{}'.", entry.name).as_str()
+                            ));
+                        }
+                    }
+                }
+
+                // Cek kompatibilitas tipe 
+                let is_compatible = if target_type == value_type {
+                    true
+                } else if target_type == TypeKind::Real && value_type == TypeKind::Integer {
+                    true // Integer masuk ke Real
+                } else {
+                    false
+                };
+
+                if !is_compatible {
+                    return Err(SemanticError::new(
+                        SemanticErrorKind::TypeMismatch,
+                        format!("Error: Tipe data tidak sesuai untuk assignment. Target mengharapkan '{:?}', tetapi mendapat '{:?}'.", target_type, value_type).as_str()
+                    ));
+                }
                 Ok(())
             },
             Stmt::If { condition, then_branch, else_branch } => {
-                // TODO:
-                // 1. visit_expr(condition)
-                // 2. Cek condition harus BOOLEAN. Error jika Integer/lainnya.
-                // 3. visit_stmt(then_branch)
-                // 4. if else_branch exists -> visit_stmt
+                // Evaluasi kondisi
+                let condition_type = self.visit_expr(condition)?;
+
+                // Validasi tipe kondisi harus boolean
+                if condition_type != TypeKind::Boolean {
+                    return Err(SemanticError::new(
+                        SemanticErrorKind::TypeMismatch,
+                        "Error: Kondisi pada 'if' harus bertipe Boolean."
+                    ));
+                }
+
+                // Visit branch
+                self.visit_stmt(then_branch)?;
+
+                if let Some(else_stmt) = else_branch {
+                    self.visit_stmt(else_stmt)?;
+                }
                 Ok(())
             },
             Stmt::While { condition, body } => {
-                // TODO:
-                // 1. visit_expr(condition)
-                // 2. Cek condition harus BOOLEAN
-                // 3. visit_stmt(body)
+                // Evaluasi kondisi
+                let condition_type = self.visit_expr(condition)?;
+
+                // Validasi tipe kondisi harus boolean
+                if condition_type != TypeKind::Boolean {
+                    return Err(SemanticError::new(
+                        SemanticErrorKind::TypeMismatch,
+                        "Error: Kondisi pada 'while' harus bertipe Boolean."
+                    ));
+                }
+
+                // Visit body
+                self.visit_stmt(body)?;
                 Ok(())
             },
             Stmt::For { iterator, start, end, direction, body } => {
-                // TODO:
-                // 1. Lookup iterator di tabel. Harus variabel lokal & tipe ordinal (Int/Char).
-                // 2. visit_expr(start) & visit_expr(end). Pastikan tipe sama dengan iterator.
-                // 3. visit_stmt(body)
+                // Search iterator variable di symbol table
+                let iter_idx = self.symbol_table.lookup(iterator).ok_or(
+                    SemanticError::new(
+                        SemanticErrorKind::UndefinedSymbol,
+                        format!("Error: Variable iterator '{}' tidak ditemukan.", iterator).as_str()
+                    )
+                )?;
+
+                let iter_entry = self.symbol_table.get(iter_idx).unwrap();
+                let iter_type = iter_entry.type_kind.clone();
+
+                // Validasi tipe iterator harus ordinal
+                match iter_type {
+                    TypeKind::Integer | TypeKind::Char | TypeKind::Boolean => {},
+                    _ => return Err(SemanticError::new(
+                        SemanticErrorKind::TypeMismatch, 
+                        "Error: Variabel iterator 'for' harus bertipe ordinal (Integer, Char, atau Boolean)."
+                    ))
+                }
+
+                // Evaluasi dan validasi tipe data start & end
+                let start_type = self.visit_expr(start)?;
+                let end_type = self.visit_expr(end)?;
+
+                if start_type != iter_type {
+                    return Err(SemanticError::new(
+                        SemanticErrorKind::TypeMismatch,
+                        format!("Error: Tipe data 'start' pada 'for' ({:?}) tidak sesuai dengan tipe iterator '{}' ({:?}).", start_type, iterator, iter_type).as_str()
+                    ));
+                }
+
+                if end_type != iter_type {
+                    return Err(SemanticError::new(
+                        SemanticErrorKind::TypeMismatch,
+                        format!("Error: Tipe data 'end' pada 'for' ({:?}) tidak sesuai dengan tipe iterator '{}' ({:?}).", end_type, iterator, iter_type).as_str()
+                    ));
+                }
+
+                // Visit body
+                self.visit_stmt(body)?;
                 Ok(())
             },
             Stmt::Repeat { body, condition } => {
-                // TODO:
-                // 1. Visit semua stmt di body
-                // 2. visit_expr(condition) -> Harus BOOLEAN
+                // Visit body
+                self.visit_stmt(body)?;
+
+                // Evaluasi kondisi
+                let condition_type = self.visit_expr(condition)?;
+
+                // Validasi tipe kondisi harus boolean
+                if condition_type != TypeKind::Boolean {
+                    return Err(SemanticError::new(
+                        SemanticErrorKind::TypeMismatch,
+                        "Error: Kondisi pada 'until' harus bertipe Boolean."
+                    ));
+                }
                 Ok(())
             },
             Stmt::Case { operand, branches, else_branch } => {
-                // TODO:
-                // 1. visit_expr(operand) -> Ambil tipenya (misal Int)
-                // 2. Loop branches:
-                //    - Loop labels: visit_expr(label) -> Pastikan tipenya SAMA dengan operand
-                //    - visit_stmt(stmt)
+                // Evaluasi operand
+                let operand_type = self.visit_expr(operand)?;
+
+                // Validasi tipe operand harus ordinal
+                match operand_type {
+                    TypeKind::Integer | TypeKind::Char | TypeKind::Boolean => {},
+                    _ => return Err(SemanticError::new(
+                        SemanticErrorKind::TypeMismatch,
+                        "Error: Tipe data operand pada 'case' harus ordinal (Integer, Char, atau Boolean)."
+                    ))
+                }
+
+                // Visit branches
+                for branch in branches {
+                    for label in &mut branch.labels {
+                        let label_type = self.visit_expr(label)?;
+
+                        // Validasi tipe label harus sama dengan tipe operand
+                        if label_type != operand_type {
+                             return Err(SemanticError::new(
+                                SemanticErrorKind::TypeMismatch, 
+                                format!("Error: Tipe label case ({:?}) tidak sesuai dengan tipe expression ({:?}).", label_type, operand_type).as_str()
+                            ));
+                        }
+                    }
+                    self.visit_stmt(&branch.stmt)?;
+                }
+
+                if let Some(else_stmt) = else_branch {
+                    self.visit_stmt(else_stmt)?;
+                }
                 Ok(())
             },
             Stmt::ProcedureCall { name, args } => {
