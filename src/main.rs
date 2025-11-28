@@ -54,7 +54,7 @@ fn main() {
 
     // pass ast_tree ke Semantic Analyzer
     println!(">> Membangun Abstract Syntax Tree (AST)...");
-    let ast = match ASTBuilder::build(&parse_tree) {
+    let mut ast = match ASTBuilder::build(&parse_tree) {
         Ok(ast) => {
             println!(">> AST Berhasil dibangun.");
             // println!("{:#?}", ast);
@@ -69,7 +69,7 @@ fn main() {
     // 5. SEMANTIC ANALYZER (Type Check & Symbol Table)
     let mut analyzer = SemanticAnalyzer::new();
     
-    match analyzer.analyze(&ast) {
+    match analyzer.analyze(&mut ast) {
         Ok(_) => {
             println!(">> Analisis Semantik BERHASIL!");
             
