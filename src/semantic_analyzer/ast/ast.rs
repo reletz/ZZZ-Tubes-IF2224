@@ -1,3 +1,4 @@
+use std::fmt;
 #[derive(Debug, Clone, PartialEq)] 
 pub struct SemanticData {
     pub type_kind: Option<TypeKind>,
@@ -61,11 +62,28 @@ pub enum TypeKind {
     Boolean,
     Char,
     String,
+    Void,
     Custom(String),
     Subrange(Box<Expr>, Box<Expr>),
     Array {
         index_range: Box<TypeKind>,
         element_type: Box<TypeKind>
+    }
+}
+
+impl fmt::Display for TypeKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TypeKind::Integer => write!(f, "Integer"),
+            TypeKind::Real => write!(f, "Real"),
+            TypeKind::Boolean => write!(f, "Boolean"),
+            TypeKind::Char => write!(f, "Char"),
+            TypeKind::String => write!(f, "String"),
+            TypeKind::Void => write!(f, "Void"),
+            TypeKind::Custom(s) => write!(f, "Custom({})", s),
+            TypeKind::Subrange(_, _) => write!(f, "Subrange"),
+            TypeKind::Array { element_type, .. } => write!(f, "Array of {}", element_type),
+        }
     }
 }
 
