@@ -74,6 +74,9 @@ impl SymbolTable {
         
         // Inisialisasi Tipe Primitif agar index 1..5 terisi
         st.init_primitives();
+
+        // Inisialisasi Standard Procedures (Index 6 ke atas)
+        st.init_standard_procedures();
         st
     }
 
@@ -91,6 +94,14 @@ impl SymbolTable {
         self.add_system_entry("char", ObjectKind::Type, TYP_CHAR, 1);
         // 5. String (Extension)
         self.add_system_entry("string", ObjectKind::Type, TYP_STRING, 1);
+    }
+
+    fn init_standard_procedures(&mut self) {
+        // writeln: Procedure, Type=NOTYPE, Ref=0 (Predefined), Level=0
+        self.add_system_entry("writeln", ObjectKind::Procedure, TYP_NOTYPE, 0);
+        self.add_system_entry("write", ObjectKind::Procedure, TYP_NOTYPE, 0);
+        self.add_system_entry("readln", ObjectKind::Procedure, TYP_NOTYPE, 0);
+        self.add_system_entry("read", ObjectKind::Procedure, TYP_NOTYPE, 0);
     }
 
     fn add_system_entry(&mut self, name: &str, obj: ObjectKind, typ: usize, size: usize) {
