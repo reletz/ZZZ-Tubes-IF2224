@@ -147,22 +147,112 @@ impl SemanticAnalyzer {
             ExprKind::Binary { left, op, right } => {
                 let left_type = self.visit_expr(left)?;
                 let right_type = self.visit_expr(right)?;
-                
-                // TODO: Logic Type Checking
-                // Misal: if left == Int && right == Int && op == Add -> Return Int
-                // Misal: if left == Int && right == Int && op == Eq -> Return Bool
-                // Else -> return SemanticError::TypeMismatch
-                
-                Ok(TypeKind::Integer) // Placeholder
+
+                match op {
+                    // Operasi aritmatika
+                    BinOp::Add | BinOp::Sub | BinOp::Mul => {
+                        if left_type == TypeKind::Integer && right_type == TypeKind::Integer {
+                            Ok(TypeKind::Integer)
+                        } else if (left_type == TypeKind::Integer || left_type == TypeKind::Real) &&
+                                  (right_type == TypeKind::Integer || right_type == TypeKind::Real) {
+                            Ok(TypeKind::Real)
+                        } else {
+                            Err(SemanticError::new(
+                                SemanticErrorKind::TypeMismatch,
+                                format!("Error: Operator '{:?}' tidak mendukung tipe '{:?}' dan '{:?}'.", op, left_type, right_type).as_str()
+                            ))
+                        }
+                    },
+                    BinOp::DivReal => {
+                        if (left_type == TypeKind::Integer || left_type == TypeKind::Real) &&
+                           (right_type == TypeKind::Integer || right_type == TypeKind::Real) {
+                            Ok(TypeKind::Real)
+                        } else {
+                            Err(SemanticError::new(
+                                SemanticErrorKind::TypeMismatch,
+                                "Error: Operator '/' membutuhkan operand numerik."
+                            ))
+                        }
+                    },
+                    BinOp::DivInt | BinOp::Mod => {
+                        if left_type == TypeKind::Integer && right_type == TypeKind::Integer {
+                            Ok(TypeKind::Integer)
+                        } else {
+                            Err(SemanticError::new(
+                                SemanticErrorKind::TypeMismatch,
+                                "Error: Operator 'div' atau 'mod' hanya berlaku untuk Integer."
+                            ))
+                        }
+                    },
+                    // Operasi perbandingan
+                    BinOp::Eq | BinOp::Neq | BinOp::Lt | BinOp::Lte | BinOp::Gt | BinOp::Gte => {
+                        if left_type == right_type {
+                            Ok(TypeKind::Boolean)
+                        } else if (left_type == TypeKind::Integer || left_type == TypeKind::Real) &&
+                                  (right_type == TypeKind::Integer || right_type == TypeKind::Real) {
+                            Ok(TypeKind::Boolean)
+                        } else {
+                            Err(SemanticError::new(
+                                SemanticErrorKind::TypeMismatch,
+                                format!("Error: Tidak dapat membandingkan tipe '{:?}' dengan '{:?}'.", left_type, right_type).as_str()
+                            ))
+                        }
+                    },
+                    // Operasi logika
+                    BinOp::And | BinOp::Or => {
+                        if left_type == TypeKind::Boolean && right_type == TypeKind::Boolean {
+                            Ok(TypeKind::Boolean)
+                        } else {
+                            Err(SemanticError::new(
+                                SemanticErrorKind::TypeMismatch,
+                                "Error: Operator logika 'and'/'or' hanya berlaku untuk Boolean."
+                            ))
+                        }
+                    }
+                }
             },
             ExprKind::Unary { op, operand } => {
                 let op_type = self.visit_expr(operand)?;
                 
-                // TODO: Logic Unary
-                // Misal: if op == Not && op_type == Bool -> Return Bool
-                // Else -> Error
-                
-                Ok(op_type) // Placeholder
+                match op {
+                    // Operasi Not
+                    UnOp::Not => {
+                        if op_type == TypeKind::Boolean {
+                            Ok(TypeKind::Boolean)
+                        } else {
+                            Err(SemanticError::new(
+                                SemanticErrorKind::TypeMismatch,
+                                "Error: Operator 'not' hanya berlaku untuk Boolean."
+                            ))
+                        }
+                    },
+                    // Operasi Negasi
+                    UnOp::Neg => {
+                        if op_type == TypeKind::Integer {
+                            Ok(TypeKind::Integer)
+                        } else if op_type == TypeKind::Real {
+                            Ok(TypeKind::Real)
+                        } else {
+                            Err(SemanticError::new(
+                                SemanticErrorKind::TypeMismatch,
+                                "Error: Operator unary '-' hanya berlaku untuk Integer atau Real."
+                            ))
+                        }
+                    },
+                    // Operasi Positif
+                    UnOp::Plus => {
+                        if op_type == TypeKind::Integer {
+                            Ok(TypeKind::Integer)
+                        } else if op_type == TypeKind::Real {
+                            Ok(TypeKind::Real)
+                        } else {
+                            Err(SemanticError::new(
+                                SemanticErrorKind::TypeMismatch,
+                                "Error: Operator unary '+' hanya berlaku untuk Integer atau Real."
+                            ))
+                        }
+                    }
+                }
             },
             ExprKind::LiteralInt(_) => Ok(TypeKind::Integer),
             ExprKind::LiteralReal(_) => Ok(TypeKind::Real),
@@ -171,33 +261,47 @@ impl SemanticAnalyzer {
             ExprKind::LiteralBool(_) => Ok(TypeKind::Boolean),
             
             ExprKind::Variable(name) => {
-                // TODO:
-                // 1. self.symbol_table.find(name)
-                // 2. Jika None -> Error UndefinedIdentifier
-                // 3. Jika Some(idx) -> 
-                //    - Ambil tipe data dari tab[idx].typ
-                //    - Simpan idx ke expr.annotation.tab_index (PENTING BUAT CODE GEN)
-                //    - Return TypeKind yang sesuai
-                
-                Ok(TypeKind::Integer) // Placeholder
+                if let Some(idx) = self.symbol_table.lookup(name) {
+                    let entry = self.symbol_table.get(idx).unwrap();
+                    let entry_type = entry.type_kind.clone();
+                    expr.annotation.tab_index = Some(idx);
+                    Ok(entry_type)
+                } else {
+                    Err(SemanticError::new(
+                        SemanticErrorKind::UndefinedSymbol,
+                        format!("Error: Identifier '{}' tidak dideklarasikan.", name).as_str()
+                    ))
+                }
             },
             
             ExprKind::ArrayAccess { array, index } => {
-                // TODO:
-                // 1. visit_expr(array) -> Pastikan tipenya Array
-                // 2. visit_expr(index) -> Pastikan tipenya Integer/Subrange yang sesuai
-                // 3. Return tipe elemen array
-                
-                Ok(TypeKind::Integer) // Placeholder
+                let array_type = self.visit_expr(array)?;
+                match array_type {
+                    Typekind::Array { element_type, .. } => {
+                        let index_type = self.visit_expr(index)?;
+                        if index_type == TypeKind::Integer {
+                            Ok(*element_type)
+                        } else {
+                            return Err(SemanticError::new(
+                                SemanticErrorKind::TypeMismatch,
+                                "Error: Indeks array harus bertipe Integer."
+                            ));
+                        }
+                    },
+                    _ => {
+                        return Err(SemanticError::new(
+                            SemanticErrorKind::TypeMismatch,
+                            "Error: Variabel yang diakses bukan sebuah Array."
+                        ));
+                    }
+                }
             },
             
             ExprKind::FunctionCall { name, args } => {
-                // Delegasi ke helper function khusus
                 self.visit_function_call(name, args)
             }
         }?;
 
-        // Simpan hasil tipe ke dalam node AST untuk M4
         expr.annotation.type_kind = Some(type_result.clone());
         
         Ok(type_result)
