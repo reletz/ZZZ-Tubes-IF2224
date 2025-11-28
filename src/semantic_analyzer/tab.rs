@@ -38,7 +38,6 @@ pub struct BTabEntry {
 }
 
 /// Representasi baris pada tabel 'atab' (Array Table)
-/// Sesuai Spesifikasi M3 Halaman 9
 #[derive(Debug, Clone)]
 pub struct ATabEntry {
     pub xtyp: usize, // index type (misal: Integer)
@@ -72,42 +71,56 @@ impl SymbolTable {
             level: 0,
         };
         
-        // Inisialisasi Tipe Primitif agar index 1..5 terisi
+        // 1. Buat Blok Global (Universe) - Level 0
+        st.make_block(); 
+        st.display[0] = 0; 
+
+        // 2. Inisialisasi Tipe Primitif (Index 1-5)
         st.init_primitives();
 
-        // Inisialisasi Standard Procedures (Index 6 ke atas)
+        // 3. Inisialisasi Standard Procedures (writeln, readln, dll)
         st.init_standard_procedures();
+
         st
     }
 
     fn init_primitives(&mut self) {
-        // Dummy entry 0 (Gak kepake/error)
-        self.add_system_entry("", ObjectKind::Type, TYP_NOTYPE, 0); 
-        
-        // 1. Integer
+        // Dummy entry 0 (Sentinel)
+        self.tab.push(TabEntry {
+            name: "".to_string(),
+            link: 0,
+            obj: ObjectKind::Type,
+            typ: TYP_NOTYPE,
+            ref_idx: 0,
+            normal: true,
+            level: 0,
+            adr: 0,
+        });
+
+        // Masukkan tipe dasar secara berurutan (Index 1..5)
+        // Fungsi add_system_entry akan otomatis me-link ke btab[0]
         self.add_system_entry("integer", ObjectKind::Type, TYP_INT, 1);
-        // 2. Real
         self.add_system_entry("real", ObjectKind::Type, TYP_REAL, 1);
-        // 3. Boolean
         self.add_system_entry("boolean", ObjectKind::Type, TYP_BOOL, 1);
-        // 4. Char
         self.add_system_entry("char", ObjectKind::Type, TYP_CHAR, 1);
-        // 5. String (Extension)
         self.add_system_entry("string", ObjectKind::Type, TYP_STRING, 1);
     }
 
     fn init_standard_procedures(&mut self) {
-        // writeln: Procedure, Type=NOTYPE, Ref=0 (Predefined), Level=0
-        self.add_system_entry("writeln", ObjectKind::Procedure, TYP_NOTYPE, 0);
+        // Daftarkan writeln dll sebagai Procedure global (Level 0)
         self.add_system_entry("write", ObjectKind::Procedure, TYP_NOTYPE, 0);
-        self.add_system_entry("readln", ObjectKind::Procedure, TYP_NOTYPE, 0);
+        self.add_system_entry("writeln", ObjectKind::Procedure, TYP_NOTYPE, 0);
         self.add_system_entry("read", ObjectKind::Procedure, TYP_NOTYPE, 0);
+        self.add_system_entry("readln", ObjectKind::Procedure, TYP_NOTYPE, 0);
     }
 
     fn add_system_entry(&mut self, name: &str, obj: ObjectKind, typ: usize, size: usize) {
+        // Ambil identifier terakhir dari global block (btab[0])
+        let last_link = self.btab[0].last;
+
         let entry = TabEntry {
             name: name.to_string(),
-            link: 0,
+            link: last_link, // Link ke identifier sebelumnya
             obj,
             typ, // Tipe menunjuk diir sendiri sebagai representasi tipe
             ref_idx: 0,
@@ -115,14 +128,18 @@ impl SymbolTable {
             level: 0,
             adr: size, // Ukuran tipe (misal 1 word)
         };
+        
         self.tab.push(entry);
+        let new_idx = self.tab.len() - 1;
+
+        // Update identifier terakhir di global block
+        self.btab[0].last = new_idx;
     }
 
     /// Memasukkan identifier baru ke tabel 'tab'
     pub fn enter(&mut self, name: String, obj: ObjectKind, typ: usize, adr: usize) -> usize {
         // 1. Ambil indeks blok aktif saat ini dari display
         let current_btab_idx = self.display[self.level];
-        
         // 2. Ambil 'last' identifier dari blok tersebut (untuk linked list)
         let last_link = self.btab[current_btab_idx].last;
 
@@ -162,7 +179,6 @@ impl SymbolTable {
     /// Menambahkan array baru ke 'atab'
     pub fn make_array(&mut self, xtyp: usize, etyp: usize, eref: usize, low: i32, high: i32, elsz: usize) -> usize {
         let size = ((high - low + 1) as usize) * elsz;
-        
         let entry = ATabEntry {
             xtyp,
             etyp,
@@ -172,7 +188,6 @@ impl SymbolTable {
             elsz,
             size,
         };
-        
         self.atab.push(entry);
         self.atab.len() - 1
     }
@@ -190,43 +205,23 @@ impl SymbolTable {
             while curr_idx != 0 {
                 let entry = &self.tab[curr_idx];
                 if entry.name == name {
-                    return Some(curr_idx); // Ketemu!
+                    return Some(curr_idx); 
                 }
-                // Pindah ke node sebelumnya
                 curr_idx = entry.link;
             }
-            
-            // Cek juga entri ke-0 (biasanya dummy, tapi kadang system types ada di awal)
-            // Di implementasi kita, system types ada di index 1..5.
-            // Linked list akan berhenti di 0. Kita perlu cek apakah index 1..5 bisa diakses?
-            // System types (integer, dll) biasanya global, jadi akan ditemukan saat lev=0.
         }
-        
-        // Cek Tipe Primitif (Global/System) secara manual jika belum ketemu di link
-        // Karena init_primitives link-nya 0, mereka tidak tersambung ke rantai utama
-        for i in 1..=5 {
-             if i < self.tab.len() && self.tab[i].name == name {
-                 return Some(i);
-             }
-        }
-
         None
     }
 
-    // Panggil kalau Analyzer masuk proses prosedur/fungsi (masuk scope)
     pub fn enter_scope(&mut self) {
         self.level += 1;
-
         if self.level >= self.display.len() {
             self.display.resize(self.level + 1, 0);
         }
-        
         let btab_idx = self.make_block();
-        // Update display stack
         self.display[self.level] = btab_idx;
     }
 
-    // Panggil kalau Analyzer udah selesai proses prosedur/fungsi (keluar scope)
     pub fn exit_scope(&mut self) {
         if self.level > 0 {
             self.level -= 1;
