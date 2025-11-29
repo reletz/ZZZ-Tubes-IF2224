@@ -26,11 +26,12 @@ impl SemanticAnalyzer {
     // ==========================================
     fn visit_program(&mut self, program: &mut ProgramAST) -> Result<(), SemanticError> {
         // 1. Init Global Scope
+        // Identifier program terlebih dahulu supaya masuk ke level 0
+        self.symbol_table.enter(program.name.clone(), ObjectKind::Program, TYP_NOTYPE, 0);
         self.symbol_table.enter_scope();
         
         // 2. Masukkan identifier program ke tabel
         // Kita masukkan sebagai Constant dengan tipe Void karena tidak punya nilai runtime.
-        self.symbol_table.enter(program.name.clone(), ObjectKind::Program, TYP_NOTYPE, 0);
         
         // 3. Visit semua deklarasi global
         self.visit_decls(&mut program.declarations)?;
@@ -95,6 +96,11 @@ impl SemanticAnalyzer {
                     self.visit_param(param)?;
                 }
 
+                // Ambil identifier terakhir yang baru saja dimasukkan
+                let current_btab_idx = self.symbol_table.display[self.symbol_table.level];
+                let last_param_idx = self.symbol_table.btab[current_btab_idx].last;
+                self.symbol_table.btab[current_btab_idx].lpar = last_param_idx;
+                
                 // 4. Visit local_decls & body
                 self.visit_decls(local_decls)?;
                 self.visit_block(body)?;
