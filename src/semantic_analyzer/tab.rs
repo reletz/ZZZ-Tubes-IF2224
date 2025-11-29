@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub enum ObjectKind {
     Constant,
@@ -6,6 +8,21 @@ pub enum ObjectKind {
     Procedure,
     Function,
     Program,
+}
+
+impl fmt::Display for ObjectKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Kita singkat namanya supaya muat di kolom tabel yang kecil
+        let s = match self {
+            ObjectKind::Constant => "Const",
+            ObjectKind::Variable => "Var",
+            ObjectKind::Type => "Type",
+            ObjectKind::Procedure => "Proc",
+            ObjectKind::Function => "Func",
+            ObjectKind::Program => "Prog",
+        };
+        write!(f, "{}", s)
+    }
 }
 
 pub const TYP_NOTYPE: usize = 0;
@@ -225,6 +242,66 @@ impl SymbolTable {
     pub fn exit_scope(&mut self) {
         if self.level > 0 {
             self.level -= 1;
+        }
+    }
+    pub fn print_tables(&self) {
+        println!("\n>> Symbol Table Dump");
+        
+        // 1. Tabel TAB (Identifiers)
+        println!("\n{:-^95}", " TAB (Identifiers) ");
+        println!("| {:<5} | {:<15} | {:<5} | {:<6} | {:<5} | {:<5} | {:<5} | {:<5} | {:<5} |", 
+            "Idx", "Name", "Link", "Obj", "Typ", "Ref", "Nrm", "Lev", "Adr");
+        println!("|{:-<93}|", "");
+
+        for (i, entry) in self.tab.iter().enumerate() {
+            // Skip dummy entry 0 jika ingin persis spesifikasi (biasanya mulai dari index 1 atau system)
+            // Tapi untuk debug, print semua lebih baik.
+            if i == 0 { continue; } 
+
+            println!("| {:<5} | {:<15} | {:<5} | {:<6} | {:<5} | {:<5} | {:<5} | {:<5} | {:<5} |",
+                i,
+                if entry.name.is_empty() { "<empty>" } else { &entry.name },
+                entry.link,
+                entry.obj,   // Menggunakan impl Display di atas
+                entry.typ,
+                entry.ref_idx,
+                if entry.normal { 1 } else { 0 }, // Spec: 1=normal, 0=var
+                entry.level,
+                entry.adr
+            );
+        }
+        println!("{:-^95}", "");
+
+        // 2. Tabel BTAB (Blocks)
+        println!("\n{:-^55}", " BTAB (Blocks) ");
+        println!("| {:<5} | {:<5} | {:<5} | {:<5} | {:<5} |", 
+            "Idx", "Last", "LPar", "PSze", "VSze");
+        println!("|{:-<53}|", "");
+
+        for (i, entry) in self.btab.iter().enumerate() {
+            println!("| {:<5} | {:<5} | {:<5} | {:<5} | {:<5} |",
+                i, entry.last, entry.lpar, entry.psze, entry.vsze
+            );
+        }
+        println!("{:-^55}", "");
+
+        // 3. Tabel ATAB (Arrays)
+        if !self.atab.is_empty() {
+            println!("\n{:-^85}", " ATAB (Arrays) ");
+            println!("| {:<5} | {:<5} | {:<5} | {:<5} | {:<8} | {:<8} | {:<5} | {:<5} |", 
+                "Idx", "XTyp", "ETyp", "ERef", "Low", "High", "ElSz", "Size");
+            println!("|{:-<83}|", "");
+
+            for (i, entry) in self.atab.iter().enumerate() {
+                 // Convert i32 to string to handle potential negative bounds nicely
+                println!("| {:<5} | {:<5} | {:<5} | {:<5} | {:<8} | {:<8} | {:<5} | {:<5} |",
+                    i + 1, // ATAB biasanya 1-based index di referensi Pascal-S
+                    entry.xtyp, entry.etyp, entry.eref, entry.low, entry.high, entry.elsz, entry.size
+                );
+            }
+            println!("{:-^85}", "");
+        } else {
+            println!("\n[ATAB is empty]");
         }
     }
 }

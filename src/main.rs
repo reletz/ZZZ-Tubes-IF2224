@@ -74,8 +74,8 @@ fn main() {
             println!(">> Analisis Semantik BERHASIL!");
             
             // Opsional: Print Symbol Table untuk membuktikan kebenaran
-            // println!(">> Symbol Table State:");
-            // println!("{:#?}", analyzer.symbol_table);
+            println!(">> Symbol Table State:");
+            analyzer.print_tables();
         },
         Err(e) => {
             eprintln!(">> Semantic Error: {}", e);

@@ -30,7 +30,7 @@ impl SemanticAnalyzer {
         
         // 2. Masukkan identifier program ke tabel
         // Kita masukkan sebagai Constant dengan tipe Void karena tidak punya nilai runtime.
-        self.symbol_table.enter(program.name.clone(), ObjectKind::Constant, TYP_NOTYPE, 0);
+        self.symbol_table.enter(program.name.clone(), ObjectKind::Program, TYP_NOTYPE, 0);
         
         // 3. Visit semua deklarasi global
         self.visit_decls(&mut program.declarations)?;
@@ -629,5 +629,9 @@ impl SemanticAnalyzer {
             },
             _ => TYP_NOTYPE,
         }
+    }
+
+    pub fn print_tables(&self) {
+        self.symbol_table.print_tables();
     }
 }
