@@ -3,7 +3,7 @@ use std::fmt;
 #[derive(Debug, Clone, PartialEq)]
 pub enum SemanticErrorKind {
     UndefinedIdentifier(String),    // Variabel 'x' belum dideklarasikan
-    DuplicateIdentifier(String),    // Variabel 'x' dideklarasikan ulang di scope sama
+    RedeclaredIdentifier(String),    // Variabel 'x' dideklarasikan ulang di scope sama
     
     TypeMismatch {
         expected: String,
@@ -25,6 +25,11 @@ pub enum SemanticErrorKind {
     // Kesalahan Array
     NotArray(String),               // Mencoba akses indeks pada bukan array: x[1]
     IndexTypeMismatch(String),      // Indeks array bukan integer/scalar
+    IndexOutOfBounds {              // Mencoba akses indeks yang di luar jangkauan
+        index: i32,
+        low: i32,
+        high: i32
+    },
     
     // Kesalahan Konstanta/Loop
     AssignmentToConstant(String),   // Mencoba assign nilai ke konstanta
@@ -66,13 +71,14 @@ impl fmt::Display for SemanticError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let message = match &self.kind {
             SemanticErrorKind::UndefinedIdentifier(id) => format!("Identifier '{}' belum dideklarasikan.", id),
-            SemanticErrorKind::DuplicateIdentifier(id) => format!("Identifier '{}' sudah dideklarasikan di scope ini.", id),
+            SemanticErrorKind::RedeclaredIdentifier(id) => format!("Identifier '{}' sudah dideklarasikan di scope ini.", id),
             SemanticErrorKind::TypeMismatch { expected, found } => format!("Tipe tidak cocok. Mengharapkan '{}', ditemukan '{}'.", expected, found),
             SemanticErrorKind::InvalidOperation { op, left_type, right_type } => format!("Operasi '{}' tidak valid untuk tipe '{}' dan '{}'.", op, left_type, right_type),
             SemanticErrorKind::ArgumentCountMismatch { expected, found } => format!("Jumlah argumen salah. Mengharapkan {}, ditemukan {}.", expected, found),
             SemanticErrorKind::NotCallable(id) => format!("'{}' bukan fungsi atau prosedur, tidak bisa dipanggil.", id),
             SemanticErrorKind::NotArray(id) => format!("'{}' bukan array, tidak bisa diakses menggunakan indeks.", id),
             SemanticErrorKind::IndexTypeMismatch(t) => format!("Tipe indeks array harus ordinal (integer/char), ditemukan '{}'.", t),
+            SemanticErrorKind::IndexOutOfBounds { index, low, high } => format!("Array index {} di luar jangkauan [{}..{}]", index, low, high),
             SemanticErrorKind::AssignmentToConstant(id) => format!("Tidak dapat mengubah nilai konstanta '{}'.", id),
             SemanticErrorKind::InvalidIterator(id) => format!("Iterator '{}' harus berupa variabel lokal bertipe ordinal.", id),
             SemanticErrorKind::GenericError(msg) => msg.clone(),

@@ -304,4 +304,19 @@ impl SymbolTable {
             println!("\n[ATAB is empty]");
         }
     }
+
+    /// Nyari identifier hanya di dalam scope (gk sampe parent)
+    pub fn find_in_current_scope(&self, name: &str) -> Option<usize> {
+        let current_btab = self.display[self.level];
+        let mut idx = self.btab[current_btab].last;
+        
+        while idx != 0 {
+            if self.tab[idx].name.to_lowercase() == name.to_lowercase() {
+                return Some(idx);
+            }
+            idx = self.tab[idx].link;
+        }
+        
+        None
+    }
 }
