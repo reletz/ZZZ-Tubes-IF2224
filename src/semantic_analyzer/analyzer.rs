@@ -22,24 +22,15 @@ impl SemanticAnalyzer {
 
     // ==========================================
     // Anggota 1: Declarations & Scope
-    // Fokus: Mengisi tabel simbol, scope management, hitung address
     // ==========================================
     fn visit_program(&mut self, program: &mut ProgramAST) -> Result<(), SemanticError> {
-        // 1. Init Global Scope
-        // Identifier program terlebih dahulu supaya masuk ke level 0
+        // Identifier program masuk ke level 0
         self.symbol_table.enter(program.name.clone(), ObjectKind::Program, TYP_NOTYPE, 0);
         self.symbol_table.enter_scope();
         
-        // 2. Masukkan identifier program ke tabel
-        // Kita masukkan sebagai Constant dengan tipe Void karena tidak punya nilai runtime.
-        
-        // 3. Visit semua deklarasi global
         self.visit_decls(&mut program.declarations)?;
-        
-        // 4. Visit main body
         self.visit_block(&mut program.main_body)?;
         
-        // 5. Exit Scope
         self.symbol_table.exit_scope();
         
         Ok(())
@@ -55,29 +46,23 @@ impl SemanticAnalyzer {
     fn visit_decl(&mut self, decl: &mut Decl) -> Result<(), SemanticError> {
         match decl {
             Decl::Constant { name, value, .. } => {
-                // 1. Evaluasi nilai konstanta untuk dapat tipenya
                 let type_kind = self.visit_expr(value)?;
                 let type_idx = self.kind_to_typ_idx(&type_kind);
-                // 2. Masukkan ke tabel
                 self.symbol_table.enter(name.clone(), ObjectKind::Constant, type_idx, 0);
                 Ok(())
             },
             Decl::Type { name, wrapped_type, .. } => {
                 let type_idx = self.kind_to_typ_idx(wrapped_type);
-                // 1. Masukkan ke tabel sebagai Type Alias
                 self.symbol_table.enter(name.clone(), ObjectKind::Type, type_idx, 0);
                 Ok(())
             },
             Decl::Variable { name, type_kind, line, column } => {
-                // 1. Validasi tipe data
                 if *type_kind == TypeKind::Void {
                     return Err(SemanticError::new(
                         SemanticErrorKind::GenericError("Variable cannot be Void".to_string()), 
                         *line, *column
                     ));
                 }
-
-                // 2. Loop vector 'name' dan masukkan ke tabel
                 let type_idx = self.kind_to_typ_idx(type_kind);
                 for var_name in name {
                     self.symbol_table.enter(var_name.clone(), ObjectKind::Variable, type_idx.clone(), 0);
@@ -85,20 +70,28 @@ impl SemanticAnalyzer {
                 Ok(())
             },
             Decl::Procedure { name, params, local_decls, body, line: _, column: _ } => {
+                // 1. Masukkan nama prosedur ke tabel parent & SIMPAN INDEXNYA
                 let proc_idx = self.symbol_table.enter(name.clone(), ObjectKind::Procedure, TYP_NOTYPE, 0);
+
+                // 2. Buat scope baru untuk parameter & lokal
                 self.symbol_table.enter_scope();
-                // Update ref_idx prosedur di parent agar menunjuk ke Block ini!
+
+                // [CRITICAL FIX]: Update ref_idx prosedur di parent agar menunjuk ke Block ini!
+                // Tanpa ini, prosedur dianggap tidak punya parameter (karena ref_idx default 0/global)
                 let new_block_idx = self.symbol_table.display[self.symbol_table.level];
                 self.symbol_table.tab[proc_idx].ref_idx = new_block_idx;
 
+                // 3. Proses parameter
                 for param in params {
                     self.visit_param(param)?;
                 }
 
+                // Update pointer lpar (last parameter) di btab
                 let current_btab_idx = self.symbol_table.display[self.symbol_table.level];
                 let last_param_idx = self.symbol_table.btab[current_btab_idx].last;
                 self.symbol_table.btab[current_btab_idx].lpar = last_param_idx;
                 
+                // 4. Proses body
                 self.visit_decls(local_decls)?;
                 self.visit_block(body)?;
 
@@ -106,25 +99,31 @@ impl SemanticAnalyzer {
                 Ok(())
             },
             Decl::Function { name, params, return_type, local_decls, body, line: _, column: _ } => {
+                // 1. Masukkan nama fungsi & SIMPAN INDEXNYA
                 let ret_idx = self.kind_to_typ_idx(return_type);
                 let func_idx = self.symbol_table.enter(name.clone(), ObjectKind::Function, ret_idx, 0);
 
+                // 2. Buat scope baru
                 self.symbol_table.enter_scope();
 
-                // Link Function Symbol -> Function Block
+                // [CRITICAL FIX]: Link Function Symbol -> Function Block
                 let new_block_idx = self.symbol_table.display[self.symbol_table.level];
                 self.symbol_table.tab[func_idx].ref_idx = new_block_idx;
 
+                // 3. Proses parameter
                 for param in params {
                     self.visit_param(param)?;
                 }
 
+                // Update pointer lpar
                 let current_btab_idx = self.symbol_table.display[self.symbol_table.level];
                 let last_param_idx = self.symbol_table.btab[current_btab_idx].last;
                 self.symbol_table.btab[current_btab_idx].lpar = last_param_idx;
 
+                // Masukkan nama fungsi sebagai variabel lokal (untuk return value)
                 self.symbol_table.enter(name.clone(), ObjectKind::Variable, ret_idx, 0);
 
+                // 4. Proses body
                 self.visit_decls(local_decls)?;
                 self.visit_block(body)?;
 
@@ -136,21 +135,19 @@ impl SemanticAnalyzer {
 
     fn visit_param(&mut self, param: &Param) -> Result<(), SemanticError> {
         let type_idx = self.kind_to_typ_idx(&param.type_kind);
-
         for param_name in &param.names {
-            // Masukkan parameter sebagai variabel lokal
-            self.symbol_table.enter(param_name.clone(), ObjectKind::Variable, type_idx.clone(), 0);
+            let idx = self.symbol_table.enter(param_name.clone(), ObjectKind::Variable, type_idx.clone(), 0);
+            if param.is_var {
+                self.symbol_table.tab[idx].normal = false;
+            }
         }
         Ok(())
     }
 
     // ==========================================
     // Anggota 2: Expressions & Type Checking
-    // Fokus: Validasi tipe data operand, return tipe hasil
     // ==========================================
     
-    /// Mengembalikan Tipe Data (TypeKind) dari ekspresi tersebut
-    /// Wajib mengisi expr.annotation.type_kind dan expr.annotation.tab_index (jika variabel)
     fn visit_expr(&mut self, expr: &mut Expr) -> Result<TypeKind, SemanticError> {
         let current_line = expr.line;
         let current_col = expr.column;
@@ -161,7 +158,6 @@ impl SemanticAnalyzer {
                 let right_type = self.visit_expr(right)?;
 
                 match op {
-                    // Operasi aritmatika
                     BinOp::Add | BinOp::Sub | BinOp::Mul => {
                         if left_type == TypeKind::Integer && right_type == TypeKind::Integer {
                             Ok(TypeKind::Integer)
@@ -200,7 +196,6 @@ impl SemanticAnalyzer {
                             ))
                         }
                     },
-                    // Operasi perbandingan
                     BinOp::Eq | BinOp::Neq | BinOp::Lt | BinOp::Lte | BinOp::Gt | BinOp::Gte => {
                         if left_type == right_type {
                             Ok(TypeKind::Boolean)
@@ -214,7 +209,6 @@ impl SemanticAnalyzer {
                             ))
                         }
                     },
-                    // Operasi logika
                     BinOp::And | BinOp::Or => {
                         if left_type == TypeKind::Boolean && right_type == TypeKind::Boolean {
                             Ok(TypeKind::Boolean)
@@ -229,31 +223,15 @@ impl SemanticAnalyzer {
             },
             ExprKind::Unary { op, operand } => {
                 let op_type = self.visit_expr(operand)?;
-
                 match op {
-                    // Operasi Not
                     UnOp::Not => {
-                        if op_type == TypeKind::Boolean {
-                            Ok(TypeKind::Boolean)
-                        } else { 
-                            Err(SemanticError::new(
-                                SemanticErrorKind::TypeMismatch { expected: "Boolean".into(), found: op_type.to_string() },
-                                current_line, current_col
-                            ))
-                        }
+                        if op_type == TypeKind::Boolean { Ok(TypeKind::Boolean) } 
+                        else { Err(SemanticError::new(SemanticErrorKind::TypeMismatch { expected: "Boolean".into(), found: op_type.to_string() }, current_line, current_col)) }
                     },
-                    // Operasi Negasi
                     UnOp::Neg | UnOp::Plus => {
-                        if op_type == TypeKind::Integer {
-                            Ok(TypeKind::Integer)
-                        } else if op_type == TypeKind::Real {
-                            Ok(TypeKind::Real)
-                        } else { 
-                            Err(SemanticError::new(
-                                SemanticErrorKind::TypeMismatch { expected: "Numeric".into(), found: op_type.to_string() },
-                                current_line, current_col
-                            ))
-                        }
+                        if op_type == TypeKind::Integer { Ok(TypeKind::Integer) } 
+                        else if op_type == TypeKind::Real { Ok(TypeKind::Real) } 
+                        else { Err(SemanticError::new(SemanticErrorKind::TypeMismatch { expected: "Numeric".into(), found: op_type.to_string() }, current_line, current_col)) }
                     },
                 }
             },
@@ -282,18 +260,37 @@ impl SemanticAnalyzer {
                 match array_type {
                     TypeKind::Array { element_type, .. } => {
                         let index_type = self.visit_expr(index)?;
-                        if index_type == TypeKind::Integer {
-                            Ok(*element_type)
-                        } else {
-                            return Err(SemanticError::new(
-                                SemanticErrorKind::IndexTypeMismatch(index_type.to_string()),
-                                current_line, current_col
-                            ));
+                        
+                        match index_type {
+                            // Tipe ordinal dasar yang valid langsung
+                            TypeKind::Integer | TypeKind::Char | TypeKind::Boolean => {
+                                Ok(*element_type)
+                            },
+                            // Jika custom, kita harus resolve tipe aslinya
+                            TypeKind::Custom(type_name) => {
+                                let type_kind = self.resolve_custom_type(&type_name);
+                                match type_kind {
+                                    Some(TypeKind::Integer) | Some(TypeKind::Char) | Some(TypeKind::Boolean) => Ok(*element_type),
+                                    Some(TypeKind::Subrange(_, _)) => Ok(*element_type), // Subrange dianggap ordinal
+                                    _ => Err(SemanticError::new(
+                                        SemanticErrorKind::IndexTypeMismatch(format!("Custom type '{}' resolves to non-ordinal", type_name)),
+                                        current_line, current_col
+                                    ))
+                                }
+                            }
+                            // Subrange juga ordinal
+                            TypeKind::Subrange(_, _) => Ok(*element_type),
+                            _ => {
+                                return Err(SemanticError::new(
+                                    SemanticErrorKind::IndexTypeMismatch(index_type.to_string()),
+                                    current_line, current_col
+                                ));
+                            }
                         }
                     },
                     _ => {
                         return Err(SemanticError::new(
-                         SemanticErrorKind::NotArray("Variable".into()), 
+                         SemanticErrorKind::NotArray("Expression".into()), 
                          current_line, current_col
                         ))
                     }
@@ -306,13 +303,11 @@ impl SemanticAnalyzer {
         }?;
 
         expr.annotation.type_kind = Some(type_result.clone());
-        
         Ok(type_result)
     }
 
     // ==========================================
     // Anggota 3: Statements & Flow Control
-    // Fokus: Validasi alur (if/while butuh bool), assignment compatibility
     // ==========================================
     fn visit_block(&mut self, block: &mut BlockStmt) -> Result<(), SemanticError> {
         for stmt in &mut block.statements {
@@ -324,14 +319,11 @@ impl SemanticAnalyzer {
     fn visit_stmt(&mut self, stmt: &mut Stmt) -> Result<(), SemanticError> {
         match stmt {
             Stmt::Assignment { target, value, line, column } => {
-                // Evaluasi Tipe
                 let target_type = self.visit_expr(target)?;
                 let value_type = self.visit_expr(value)?;
 
-                // Cek apakah target adalah variabel?
                 if let Some(idx) = target.annotation.tab_index {
                     if let Some(entry) = self.symbol_table.tab.get(idx) {
-                        let entry = &self.symbol_table.tab[idx];
                         if entry.obj == ObjectKind::Constant {
                             return Err(SemanticError::new(
                                 SemanticErrorKind::AssignmentToConstant(entry.name.clone()), 
@@ -342,7 +334,6 @@ impl SemanticAnalyzer {
                 }
 
                 if target_type != value_type {
-                    // Allow Int to Real
                     if target_type == TypeKind::Real && value_type == TypeKind::Integer {
                         return Ok(());
                     }
@@ -357,111 +348,69 @@ impl SemanticAnalyzer {
                 Ok(())
             },
             Stmt::If { condition, then_branch, else_branch, .. } => {
-                // Evaluasi kondisi
                 let condition_type = self.visit_expr(condition)?;
-
-                // Validasi tipe kondisi harus boolean
                 if condition_type != TypeKind::Boolean {
-                    return Err(SemanticError::new(
-                        SemanticErrorKind::TypeMismatch { expected: "Boolean".into(), found: condition_type.to_string() },
-                        condition.line, condition.column
-                    ));
+                    return Err(SemanticError::new(SemanticErrorKind::TypeMismatch { expected: "Boolean".into(), found: condition_type.to_string() }, condition.line, condition.column));
                 }
-
-                // Visit branch
                 self.visit_stmt(then_branch)?;
-
                 if let Some(else_stmt) = else_branch {
                     self.visit_stmt(else_stmt)?;
                 }
                 Ok(())
             },
             Stmt::While { condition, body, .. } => {
-                // Evaluasi kondisi
                 let condition_type = self.visit_expr(condition)?;
-
-                // Validasi tipe kondisi harus boolean
                 if condition_type != TypeKind::Boolean {
-                    return Err(SemanticError::new(
-                        SemanticErrorKind::TypeMismatch { expected: "Boolean".into(), found: condition_type.to_string() },
-                        condition.line, condition.column
-                    ));
+                    return Err(SemanticError::new(SemanticErrorKind::TypeMismatch { expected: "Boolean".into(), found: condition_type.to_string() }, condition.line, condition.column));
                 }
-
-                // Visit body
                 self.visit_stmt(body)?;
                 Ok(())
             },
             Stmt::For { iterator, start, end, direction: _, body, line, column } => {
-                // Search iterator variable di symbol table
                 if let Some(idx) = self.symbol_table.find(iterator) {
                     let entry = &self.symbol_table.tab[idx];
                     let iter_type = self.typ_idx_to_kind(entry.typ);
                     if iter_type != TypeKind::Integer {
-                         return Err(SemanticError::new(
-                             SemanticErrorKind::InvalidIterator(iterator.clone()), 
-                             *line, *column
-                        ));
+                         return Err(SemanticError::new(SemanticErrorKind::InvalidIterator(iterator.clone()), *line, *column));
                     }
                 } else {
-                     return Err(SemanticError::new(
-                         SemanticErrorKind::UndefinedIdentifier(iterator.clone()), 
-                         *line, *column
-                    ));
+                     return Err(SemanticError::new(SemanticErrorKind::UndefinedIdentifier(iterator.clone()), *line, *column));
                 }
 
                 let start_type = self.visit_expr(start)?;
                 let end_type = self.visit_expr(end)?;
 
                 if start_type != TypeKind::Integer || end_type != TypeKind::Integer {
-                    return Err(SemanticError::new(
-                        SemanticErrorKind::TypeMismatch { expected: "Integer".into(), found: "Non-Integer".into() },
-                        *line, *column
-                    ));
+                    return Err(SemanticError::new(SemanticErrorKind::TypeMismatch { expected: "Integer".into(), found: "Non-Integer".into() }, *line, *column));
                 }
-
                 self.visit_stmt(body)?;
                 Ok(())
             },
             Stmt::Repeat { body, condition, .. } => {
-                for s in body {
-                    self.visit_stmt(s)?;
-                }
+                for s in body { self.visit_stmt(s)?; }
                 let condition_type = self.visit_expr(condition)?;
                 if condition_type != TypeKind::Boolean {
-                     return Err(SemanticError::new(
-                        SemanticErrorKind::TypeMismatch { expected: "Boolean".into(), found: condition_type.to_string() },
-                        condition.line, condition.column
-                    ));
+                     return Err(SemanticError::new(SemanticErrorKind::TypeMismatch { expected: "Boolean".into(), found: condition_type.to_string() }, condition.line, condition.column));
                 }
                 Ok(())
             },
             Stmt::Case { operand, branches, else_branch, line, column } => {
                 let op_type = self.visit_expr(operand)?;
-                
-                // Cek branches
                 for branch in branches {
                     for label in &mut branch.labels {
                          let label_type = self.visit_expr(label)?;
                          if label_type != op_type {
-                             return Err(SemanticError::new(
-                                 SemanticErrorKind::TypeMismatch { expected: op_type.to_string(), found: label_type.to_string() },
-                                 *line, *column
-                            ));
+                             return Err(SemanticError::new(SemanticErrorKind::TypeMismatch { expected: op_type.to_string(), found: label_type.to_string() }, *line, *column));
                          }
                     }
                     self.visit_stmt(&mut branch.stmt)?;
                 }
-
                 if let Some(else_stmts) = else_branch {
-                    for stmt in else_stmts {
-                        self.visit_stmt(stmt)?;
-                    }
+                    for stmt in else_stmts { self.visit_stmt(stmt)?; }
                 }
                 Ok(())
             },
             Stmt::ProcedureCall { name, args, line, column } => {
-                // Delegasi ke helper function
                 self.visit_proc_call(name, args, *line, *column)
             },
             Stmt::Compound(block) => self.visit_block(block),
@@ -470,7 +419,6 @@ impl SemanticAnalyzer {
 
     // ==========================================
     // Anggota 4: Array & Function/Procedure Calls
-    // Fokus: Validasi argumen, parameter matching, array bounds
     // ==========================================
     
     fn visit_function_call(&mut self, name: &str, args: &mut Vec<Expr>, line: usize, col: usize) -> Result<TypeKind, SemanticError> {
@@ -479,34 +427,33 @@ impl SemanticAnalyzer {
         )?;
         let func_entry = &self.symbol_table.tab[func_idx];
         if func_entry.obj != ObjectKind::Function {
-             return Err(SemanticError::new(
-                 SemanticErrorKind::NotCallable(name.into()), 
-                 line, col
-            ));
+             return Err(SemanticError::new(SemanticErrorKind::NotCallable(name.into()), line, col));
         }
+        
         let ret_type = self.typ_idx_to_kind(func_entry.typ);
         let btab_idx = func_entry.ref_idx;
+        
         let params_idx = self.get_parameters_from_btab(btab_idx);
         self.validate_args(args, &params_idx, line, col)?;
         Ok(ret_type)
     }
 
     fn visit_proc_call(&mut self, name: &str, args: &mut Vec<Expr>, line: usize, col: usize) -> Result<(), SemanticError> {
+        // Handle standard IO procedures (variadic)
+        if matches!(name.to_lowercase().as_str(), "write" | "writeln" | "read" | "readln") {
+            for arg in args { self.visit_expr(arg)?; }
+            return Ok(());
+        }
+
         let proc_idx = self.symbol_table.find(name).ok_or(
             SemanticError::new(SemanticErrorKind::UndefinedIdentifier(name.into()), line, col)
         )?;
         let proc_entry = &self.symbol_table.tab[proc_idx];
         if proc_entry.obj != ObjectKind::Procedure {
-             return Err(SemanticError::new(
-                 SemanticErrorKind::NotCallable(name.into()),
-                 line, col
-            ));
+             return Err(SemanticError::new(SemanticErrorKind::NotCallable(name.into()), line, col));
         }
+        
         let btab_idx = proc_entry.ref_idx;
-        if btab_idx == 0 {
-            for arg in args { self.visit_expr(arg)?; }
-            return Ok(());
-        }
         let params_idx = self.get_parameters_from_btab(btab_idx);
         self.validate_args(args, &params_idx, line, col)?;
         Ok(())
@@ -523,6 +470,7 @@ impl SemanticAnalyzer {
             let arg_type = self.visit_expr(arg_expr)?;
             let param_entry = &self.symbol_table.tab[param_idx];
             let param_type = self.typ_idx_to_kind(param_entry.typ);
+            
             let is_compat = arg_type == param_type || (arg_type == TypeKind::Integer && param_type == TypeKind::Real);
             if !is_compat {
                  return Err(SemanticError::new(
@@ -542,7 +490,9 @@ impl SemanticAnalyzer {
 
     // Helper functions
     fn get_parameters_from_btab(&self, btab_idx: usize) -> Vec<usize> {
+        // [Safety]: btab_idx 0 adalah global block, biasanya tanpa parameter.
         if btab_idx >= self.symbol_table.btab.len() { return Vec::new(); }
+        
         let mut params = Vec::new();
         let mut curr = self.symbol_table.btab[btab_idx].lpar;
         while curr != 0 {
@@ -554,14 +504,12 @@ impl SemanticAnalyzer {
     }
 
     fn typ_idx_to_kind(&self, idx: usize) -> TypeKind {
-        // Cek apakah tipe adalah Array (disimpan di ATAB)
         let entry = &self.symbol_table.tab[idx];
         if entry.obj == ObjectKind::Type && entry.ref_idx > 0 {
-             // ref_idx 1-based ke ATAB
              let atab_idx = entry.ref_idx - 1;
              if let Some(arr_info) = self.symbol_table.atab.get(atab_idx) {
                  let element_kind = self.typ_idx_to_kind(arr_info.etyp);
-                 // Rekonstruksi subrange dummy (kita hanya butuh TypeKind, bukan nilai eksaknya untuk display)
+                 // Dummy subrange for type representation
                  let range_kind = TypeKind::Subrange(
                      Box::new(Expr::new(ExprKind::LiteralInt(arr_info.low), 0, 0)),
                      Box::new(Expr::new(ExprKind::LiteralInt(arr_info.high), 0, 0))
@@ -604,8 +552,7 @@ impl SemanticAnalyzer {
                 let el_size = self.symbol_table.tab[el_idx].adr; 
                 let atab_idx = self.symbol_table.make_array(idx_typ, el_idx, 0, low, high, el_size);
                 
-                // ref_idx -> atab_idx + 1
-                let type_idx = self.symbol_table.enter("".to_string(), ObjectKind::Type, TYP_NOTYPE, 0); 
+                let _ = self.symbol_table.enter("".to_string(), ObjectKind::Type, TYP_NOTYPE, 0); 
                 
                 let total_size = self.symbol_table.atab[atab_idx].size;
                 let last = self.symbol_table.tab.len() - 1;
@@ -629,6 +576,17 @@ impl SemanticAnalyzer {
             },
             _ => TYP_NOTYPE,
         }
+    }
+
+    fn resolve_custom_type(&self, name: &str) -> Option<TypeKind> {
+        if let Some(idx) = self.symbol_table.find(name) {
+            let entry = &self.symbol_table.tab[idx];
+            if entry.obj == ObjectKind::Type {
+                // Return the base TypeKind
+                return Some(self.typ_idx_to_kind(entry.typ));
+            }
+        }
+        None
     }
 
     fn eval_const_expr(&self, expr: &Expr) -> Option<i32> {
