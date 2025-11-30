@@ -231,7 +231,7 @@ impl SemanticAnalyzer {
             },
             ExprKind::Unary { op, operand } => {
                 let op_type = self.visit_expr(operand)?;
-                
+
                 match op {
                     // Operasi Not
                     UnOp::Not => {
@@ -245,7 +245,7 @@ impl SemanticAnalyzer {
                         }
                     },
                     // Operasi Negasi
-                    UnOp::Neg => {
+                    UnOp::Neg | UnOp::Plus => {
                         if op_type == TypeKind::Integer {
                             Ok(TypeKind::Integer)
                         } else if op_type == TypeKind::Real {
@@ -257,19 +257,6 @@ impl SemanticAnalyzer {
                             ))
                         }
                     },
-                    // Operasi Positif
-                    UnOp::Plus => {
-                        if op_type == TypeKind::Integer {
-                            Ok(TypeKind::Integer)
-                        } else if op_type == TypeKind::Real {
-                            Ok(TypeKind::Real)
-                        } else { 
-                            Err(SemanticError::new(
-                                SemanticErrorKind::TypeMismatch { expected: "Numeric".into(), found: op_type.to_string() },
-                                current_line, current_col
-                            ))
-                        }
-                    }
                 }
             },
             ExprKind::LiteralInt(_) => Ok(TypeKind::Integer),
@@ -407,7 +394,6 @@ impl SemanticAnalyzer {
                 self.visit_stmt(body)?;
                 Ok(())
             },
-            // FIXED: Explicitly bind `line` and `column`
             Stmt::For { iterator, start, end, direction: _, body, line, column } => {
                 // Search iterator variable di symbol table
                 if let Some(idx) = self.symbol_table.find(iterator) {
@@ -570,6 +556,25 @@ impl SemanticAnalyzer {
     }
 
     fn typ_idx_to_kind(&self, idx: usize) -> TypeKind {
+        // Cek apakah tipe adalah Array (disimpan di ATAB)
+        let entry = &self.symbol_table.tab[idx];
+        if entry.obj == ObjectKind::Type && entry.ref_idx > 0 {
+             // ref_idx 1-based ke ATAB
+             let atab_idx = entry.ref_idx - 1;
+             if let Some(arr_info) = self.symbol_table.atab.get(atab_idx) {
+                 let element_kind = self.typ_idx_to_kind(arr_info.etyp);
+                 // Rekonstruksi subrange dummy (kita hanya butuh TypeKind, bukan nilai eksaknya untuk display)
+                 let range_kind = TypeKind::Subrange(
+                     Box::new(Expr::new(ExprKind::LiteralInt(arr_info.low), 0, 0)),
+                     Box::new(Expr::new(ExprKind::LiteralInt(arr_info.high), 0, 0))
+                 );
+                 return TypeKind::Array {
+                     index_range: Box::new(range_kind),
+                     element_type: Box::new(element_kind)
+                 };
+             }
+        }
+
         match idx {
             TYP_INT => TypeKind::Integer,
             TYP_REAL => TypeKind::Real,
@@ -580,13 +585,40 @@ impl SemanticAnalyzer {
         }
     }
 
-    fn kind_to_typ_idx(&self, kind: &TypeKind) -> usize {
+    fn kind_to_typ_idx(&mut self, kind: &TypeKind) -> usize {
         match kind {
             TypeKind::Integer => TYP_INT,
             TypeKind::Real => TYP_REAL,
             TypeKind::Boolean => TYP_BOOL,
             TypeKind::Char => TYP_CHAR,
             TypeKind::String => TYP_STRING,
+            TypeKind::Array { index_range, element_type } => {
+                let el_idx = self.kind_to_typ_idx(element_type);
+                let (low, high, idx_typ) = match &**index_range {
+                    TypeKind::Subrange(start, end) => {
+                        let l = self.eval_const_expr(start).unwrap_or(0);
+                        let h = self.eval_const_expr(end).unwrap_or(0);
+                        (l, h, TYP_INT)
+                    },
+                    _ => (0, 0, TYP_INT),
+                };
+
+                let el_size = self.symbol_table.tab[el_idx].adr; 
+                let atab_idx = self.symbol_table.make_array(idx_typ, el_idx, 0, low, high, el_size);
+                
+                // ref_idx -> atab_idx + 1
+                let type_idx = self.symbol_table.enter("".to_string(), ObjectKind::Type, TYP_NOTYPE, 0); 
+                
+                let total_size = self.symbol_table.atab[atab_idx].size;
+                let last = self.symbol_table.tab.len() - 1;
+                
+                self.symbol_table.tab[last].ref_idx = atab_idx + 1;
+                self.symbol_table.tab[last].typ = last;
+                self.symbol_table.tab[last].adr = total_size;
+
+                last
+            },
+            TypeKind::Subrange(_, _) => TYP_INT, 
             TypeKind::Custom(name) => {
                 if let Some(idx) = self.symbol_table.find(name) {
                     if let Some(entry) = self.symbol_table.tab.get(idx) {
@@ -598,6 +630,16 @@ impl SemanticAnalyzer {
                 TYP_NOTYPE
             },
             _ => TYP_NOTYPE,
+        }
+    }
+
+    fn eval_const_expr(&self, expr: &Expr) -> Option<i32> {
+        match &expr.kind {
+            ExprKind::LiteralInt(val) => Some(*val),
+            ExprKind::Unary { op: UnOp::Neg, operand } => {
+                 self.eval_const_expr(operand).map(|v| -v)
+            },
+            _ => None
         }
     }
 
