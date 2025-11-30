@@ -35,22 +35,21 @@ impl SemanticAnalyzer {
     // Fokus: Mengisi tabel simbol, scope management, hitung address
     // ==========================================
     fn visit_program(&mut self, program: &mut ProgramAST) -> () {
-        // 1. Init Global Scope
+        // Init Global Scope
         // Identifier program terlebih dahulu supaya masuk ke level 0
         self.symbol_table.enter(program.name.clone(), ObjectKind::Program, TYP_NOTYPE, 0, true);
+        
+        // Visit semua deklarasi global
+        self.visit_decls(&mut program.declarations);
+
+        // Masuk ke scope utama program
         self.symbol_table.enter_scope();
         
-        // 2. Masukkan identifier program ke tabel
-        // Kita masukkan sebagai Constant dengan tipe Void karena tidak punya nilai runtime.
-        
-        // 3. Visit semua deklarasi global
-        self.visit_decls(&mut program.declarations);
-        
-        // 4. Visit main body
+        // Visit main body
         if !self.should_bail() {
             self.visit_block(&mut program.main_body);
         }
-        // 5. Exit Scope
+        // Exit Scope
         self.symbol_table.exit_scope();
     }
 
@@ -110,11 +109,26 @@ impl SemanticAnalyzer {
 
                 // 2. Loop vector 'name' dan masukkan ke tabel
                 let type_idx = self.kind_to_typ_idx(type_kind);
+                let var_size = 1;
+
                 for var_name in name {
                     if self.check_redeclaration(var_name, *line, *column) {
                         continue;
                     }
-                    self.symbol_table.enter(var_name.clone(), ObjectKind::Variable, type_idx.clone(), 0, true);
+                    let current_btab_idx = self.symbol_table.display[self.symbol_table.level];
+                    let current_offset = self.symbol_table.btab[current_btab_idx].vsze;
+
+                    // Masukkan ke tabel dengan address = current_offset
+                    self.symbol_table.enter(
+                        var_name.clone(), 
+                        ObjectKind::Variable, 
+                        type_idx.clone(), 
+                        current_offset,
+                        true
+                    );
+
+                    // Update total ukuran variabel (vsze) di block ini
+                    self.symbol_table.btab[current_btab_idx].vsze += var_size;
                 }
             },
             Decl::Procedure { name, params, local_decls, body, line, column } => {
@@ -123,29 +137,33 @@ impl SemanticAnalyzer {
                     return;
                 }
 
-                let btab_idx = self.symbol_table.make_block();
+                // 2. Masukkan nama prosedur dengan ref sementara
+                let proc_idx = self.symbol_table.enter(name.clone(), ObjectKind::Procedure, TYP_NOTYPE, 0, true);
 
-                // 2. Masukkan nama prosedur ke tabel entry
-                self.symbol_table.enter(name.clone(), ObjectKind::Procedure, TYP_NOTYPE, btab_idx, true);
-
-                // 2. Naik level (Scope Baru)
+                // 3. Naik level (Scope Baru)
                 self.symbol_table.enter_scope();
 
-                // 3. Visit parameters
+                // 4. Ambil index block 
+                let btab_idx = self.symbol_table.display[self.symbol_table.level];
+
+                // 5. Update ref_idx di tabel simbol
+                self.symbol_table.tab[proc_idx].ref_idx = btab_idx;
+
+                // 6. Visit parameters
                 for param in params {
                     self.visit_param(param);
                 }
 
-                // Ambil identifier terakhir yang baru saja dimasukkan
+                // 7. Ambil identifier terakhir yang baru saja dimasukkan
                 let current_btab_idx = self.symbol_table.display[self.symbol_table.level];
                 let last_param_idx = self.symbol_table.btab[current_btab_idx].last;
                 self.symbol_table.btab[current_btab_idx].lpar = last_param_idx;
                 
-                // 4. Visit local_decls & body
+                // 8. Visit local_decls & body
                 self.visit_decls(local_decls);
                 self.visit_block(body);
 
-                // 6. Exit Scope
+                // 9. Exit Scope
                 self.symbol_table.exit_scope();
             },
             Decl::Function { name, params, return_type, local_decls, body, line, column} => {
@@ -165,31 +183,38 @@ impl SemanticAnalyzer {
                     ));
                 }
 
-                // 3. Masukkan nama fungsi ke tabel parent
                 let ret_idx = self.kind_to_typ_idx(return_type);
-                let btab_idx = self.symbol_table.make_block();
-                self.symbol_table.enter(name.clone(), ObjectKind::Variable, ret_idx, btab_idx, true);
+
+                // 3. Masukkan nama fungsi dengan ref sementara
+                let func_idx = self.symbol_table.enter(name.clone(), ObjectKind::Function, ret_idx, 0, true);
 
                 // 4. Naik level (Scope Baru)
                 self.symbol_table.enter_scope();
 
-                // 5. Visit param
+                // 5. Patch ref_idx di tabel simbol
+                let btab_idx = self.symbol_table.display[self.symbol_table.level];
+                self.symbol_table.tab[func_idx].ref_idx = btab_idx;
+
+                // 6. Visit param
                 for param in params {
                     self.visit_param(param);
                 }
                 
-                // Masukkan nama fungsi sebagai variabel lokal untuk return value assignment
-                self.symbol_table.enter(name.clone(), ObjectKind::Variable, ret_idx, 0, true);
-
+                // 7. Variabel return value
                 let current_btab_idx = self.symbol_table.display[self.symbol_table.level];
-                let last_param_idx = self.symbol_table.btab[current_btab_idx].last;
-                self.symbol_table.btab[current_btab_idx].lpar = last_param_idx;
+                let current_offset = self.symbol_table.btab[current_btab_idx].vsze;
+                
+                self.symbol_table.enter(name.clone(), ObjectKind::Variable, ret_idx, current_offset, true);
+                self.symbol_table.btab[current_btab_idx].vsze += 1;
 
-                // 6. Visit local_decls & body
+                // 8. Update last_param_idx
+                let last_param_idx = self.symbol_table.btab[current_btab_idx].last; 
+
+                // 9. Visit local_decls & body
                 self.visit_decls(local_decls);
                 self.visit_block(body);
 
-                // 7. Exit Scope
+                // 10. Exit Scope
                 self.symbol_table.exit_scope();
             }
         }
