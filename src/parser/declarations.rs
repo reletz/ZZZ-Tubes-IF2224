@@ -307,17 +307,24 @@ impl PascalParser {
     /// Mem-parse: <identifier-list> ':' <type-spec>
     /// (Dipanggil oleh `parse_formal_parameter_list`)
     fn parse_formal_parameter_group(&mut self) -> Result<FormalParameterGroup, SyntaxError> {
-        // 1. `let identifiers = self.parse_identifier_list()?`
+        // 1. Cek apakah ada keyword 'var' (pass by reference)
+        let var_kw = if self.check_keyword("var") {
+            Some(self.advance().clone())
+        } else {
+            None
+        };
+
+        // 2. `let identifiers = self.parse_identifier_list()?`
         let identifiers = self.parse_identifier_list()?;
         
-        // 2. `let colon = self.consume_token(TokenType::Colon, ...).clone()`
+        // 3. `let colon = self.consume_token(TokenType::Colon, ...).clone()`
         let colon = self.consume_token(TokenType::Colon, "Mengharapkan ':' setelah daftar identifier parameter.")?.clone();
         
-        // 3. `let var_type = self.parse_type_spec()?`
+        // 4. `let var_type = self.parse_type_spec()?`
         let var_type = self.parse_type_spec()?;
         
-        // 4. Kembalikan `Ok(FormalParameterGroup { identifiers, colon, var_type })`
-        Ok(FormalParameterGroup { identifiers, colon, var_type })
+        // 5. Kembalikan `Ok(FormalParameterGroup { var_kw, identifiers, colon, var_type })`
+        Ok(FormalParameterGroup { var_kw, identifiers, colon, var_type })
     }
 
     /// Mem-parse: ID (',' ID)*

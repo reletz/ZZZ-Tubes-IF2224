@@ -37,7 +37,7 @@ impl SemanticAnalyzer {
     fn visit_program(&mut self, program: &mut ProgramAST) -> () {
         // 1. Init Global Scope
         // Identifier program terlebih dahulu supaya masuk ke level 0
-        self.symbol_table.enter(program.name.clone(), ObjectKind::Program, TYP_NOTYPE, 0);
+        self.symbol_table.enter(program.name.clone(), ObjectKind::Program, TYP_NOTYPE, 0, true);
         self.symbol_table.enter_scope();
         
         // 2. Masukkan identifier program ke tabel
@@ -79,11 +79,11 @@ impl SemanticAnalyzer {
                         }
                         let type_idx = self.kind_to_typ_idx(&type_kind);
                         // 2. Masukkan ke tabel
-                        self.symbol_table.enter(name.clone(), ObjectKind::Constant, type_idx, 0);
+                        self.symbol_table.enter(name.clone(), ObjectKind::Constant, type_idx, 0, true);
                     }
                     Err(e) => {
                         self.report_error(e);
-                        self.symbol_table.enter(name.clone(), ObjectKind::Constant, TYP_NOTYPE, 0);
+                        self.symbol_table.enter(name.clone(), ObjectKind::Constant, TYP_NOTYPE, 0, true);
                     }
                 }
             },
@@ -93,7 +93,7 @@ impl SemanticAnalyzer {
                     }
                 let type_idx = self.kind_to_typ_idx(wrapped_type);
                 // 1. Masukkan ke tabel sebagai Type Alias
-                self.symbol_table.enter(name.clone(), ObjectKind::Type, type_idx, 0);
+                self.symbol_table.enter(name.clone(), ObjectKind::Type, type_idx, 0, true);
             },
             Decl::Variable { name, type_kind, line, column } => {
                 // 1. Validasi tipe data
@@ -114,7 +114,7 @@ impl SemanticAnalyzer {
                     if self.check_redeclaration(var_name, *line, *column) {
                         continue;
                     }
-                    self.symbol_table.enter(var_name.clone(), ObjectKind::Variable, type_idx.clone(), 0);
+                    self.symbol_table.enter(var_name.clone(), ObjectKind::Variable, type_idx.clone(), 0, true);
                 }
             },
             Decl::Procedure { name, params, local_decls, body, line, column } => {
@@ -126,7 +126,7 @@ impl SemanticAnalyzer {
                 let btab_idx = self.symbol_table.make_block();
 
                 // 2. Masukkan nama prosedur ke tabel entry
-                self.symbol_table.enter(name.clone(), ObjectKind::Procedure, TYP_NOTYPE, btab_idx);
+                self.symbol_table.enter(name.clone(), ObjectKind::Procedure, TYP_NOTYPE, btab_idx, true);
 
                 // 2. Naik level (Scope Baru)
                 self.symbol_table.enter_scope();
@@ -168,7 +168,7 @@ impl SemanticAnalyzer {
                 // 3. Masukkan nama fungsi ke tabel parent
                 let ret_idx = self.kind_to_typ_idx(return_type);
                 let btab_idx = self.symbol_table.make_block();
-                self.symbol_table.enter(name.clone(), ObjectKind::Variable, ret_idx, btab_idx);
+                self.symbol_table.enter(name.clone(), ObjectKind::Variable, ret_idx, btab_idx, true);
 
                 // 4. Naik level (Scope Baru)
                 self.symbol_table.enter_scope();
@@ -179,7 +179,7 @@ impl SemanticAnalyzer {
                 }
                 
                 // Masukkan nama fungsi sebagai variabel lokal untuk return value assignment
-                self.symbol_table.enter(name.clone(), ObjectKind::Variable, ret_idx, 0);
+                self.symbol_table.enter(name.clone(), ObjectKind::Variable, ret_idx, 0, true);
 
                 let current_btab_idx = self.symbol_table.display[self.symbol_table.level];
                 let last_param_idx = self.symbol_table.btab[current_btab_idx].last;
@@ -198,9 +198,17 @@ impl SemanticAnalyzer {
     fn visit_param(&mut self, param: &Param) -> () {
         let type_idx = self.kind_to_typ_idx(&param.type_kind);
 
+        let is_normal = !param.is_var;
+
         for param_name in &param.names {
             // Masukkan parameter sebagai variabel lokal
-            self.symbol_table.enter(param_name.clone(), ObjectKind::Variable, type_idx.clone(), 0);
+            self.symbol_table.enter(
+                param_name.clone(), 
+                ObjectKind::Variable, 
+                type_idx.clone(), 
+                0, 
+                is_normal
+            );
         }
     }
 
@@ -945,7 +953,7 @@ impl SemanticAnalyzer {
                 let el_size = self.symbol_table.tab[el_idx].adr; 
                 let atab_idx = self.symbol_table.make_array(idx_typ, el_idx, 0, low, high, el_size);
                 
-                let type_idx = self.symbol_table.enter("".to_string(), ObjectKind::Type, TYP_NOTYPE, 0); 
+                let type_idx = self.symbol_table.enter("".to_string(), ObjectKind::Type, TYP_NOTYPE, 0, true); 
                 
                 let total_size = self.symbol_table.atab[atab_idx].size;
                 let last = self.symbol_table.tab.len() - 1;

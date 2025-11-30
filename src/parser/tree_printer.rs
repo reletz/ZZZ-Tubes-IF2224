@@ -318,6 +318,10 @@ impl ParseTreePrinter {
 
     fn print_formal_parameter_group(&mut self, group: &FormalParameterGroup, is_last: bool) -> String {
         let mut out = String::new();
+        if let Some(token) = &group.var_kw {
+            out += &self.print_terminal_token(token, false);
+        }
+        
         out += &self.print_identifier_list(&group.identifiers, false);
         out += &self.print_terminal_token(&group.colon, false);
         out += &self.print_type(&group.var_type, is_last);

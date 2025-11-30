@@ -114,6 +114,7 @@ pub struct FormalParameterList {
 
 #[derive(Debug)]
 pub struct FormalParameterGroup {
+    pub var_kw: Option<Token>,
     pub identifiers: IdentifierList,
     pub colon: Token, // COLON(:)
     pub var_type: Type,
