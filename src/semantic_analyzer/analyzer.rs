@@ -820,9 +820,29 @@ impl SemanticAnalyzer {
     // ==========================================
     
     fn visit_function_call(&mut self, name: &str, args: &mut Vec<Expr>, line: usize, col: usize) -> Result<TypeKind, SemanticError> {
-        let func_idx = self.symbol_table.find(name).ok_or(
+        let mut func_idx = self.symbol_table.find(name).ok_or(
             SemanticError::new(SemanticErrorKind::UndefinedIdentifier(name.into()), line, col)
         )?;
+        if self.symbol_table.tab[func_idx].obj == ObjectKind::Variable {
+            if self.symbol_table.level > 0 {
+                for lev in (0..self.symbol_table.level).rev() {
+                    let btab_idx = self.symbol_table.display[lev];
+                    let mut curr_idx = self.symbol_table.btab[btab_idx].last;
+                    while curr_idx != 0 {
+                        if self.symbol_table.tab[curr_idx].name == name {
+                            if self.symbol_table.tab[curr_idx].obj == ObjectKind::Function {
+                                func_idx = curr_idx; // Update index ke Function asli
+                            }
+                            break;
+                        }
+                        curr_idx = self.symbol_table.tab[curr_idx].link;
+                    }
+                    if self.symbol_table.tab[func_idx].obj == ObjectKind::Function {
+                        break;
+                    }
+                }
+            }
+        }
         let func_entry = &self.symbol_table.tab[func_idx];
         if func_entry.obj != ObjectKind::Function {
              return Err(SemanticError::new(SemanticErrorKind::NotCallable(name.into()), line, col));

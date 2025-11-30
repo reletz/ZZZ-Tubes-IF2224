@@ -1,0 +1,7 @@
+>> Parsing Berhasil!
+>> AST Berhasil dibangun.
+
+>> Analisis Semantik GAGAL dengan 3 error:
+  [1] SemanticError at 6:5: Identifier 'x' sudah dideklarasikan di scope ini.
+  [2] SemanticError at 10:5: Identifier 'a' belum dideklarasikan.
+  [3] SemanticError at 11:8: Tidak dapat mengubah nilai konstanta 'PI'.
