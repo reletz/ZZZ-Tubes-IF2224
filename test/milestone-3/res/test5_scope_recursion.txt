@@ -1,0 +1,167 @@
+>> Parsing Berhasil!
+>> AST Berhasil dibangun.
+>> Analisis Semantik BERHASIL!
+>> Symbol Table State:
+
+>> Symbol Table Dump
+
+-------------------------------------- TAB (Identifiers) --------------------------------------
+| Idx   | Name            | Link  | Obj    | Typ   | Ref   | Nrm   | Lev   | Adr   |
+|---------------------------------------------------------------------------------------------|
+| 1     | AND             | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 2     | ARRAY           | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 3     | BEGIN           | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 4     | CASE            | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 5     | CONST           | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 6     | DIV             | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 7     | DOWNTO          | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 8     | DO              | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 9     | ELSE            | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 10    | END             | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 11    | FOR             | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 12    | FUNCTION        | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 13    | IF              | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 14    | MOD             | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 15    | NOT             | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 16    | OF              | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 17    | OR              | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 18    | PROCEDURE       | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 19    | PROGRAM         | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 20    | RECORD          | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 21    | REPEAT          | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 22    | STRING          | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 23    | THEN            | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 24    | TO              | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 25    | TYPE            | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 26    | UNTIL           | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 27    | VAR             | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 28    | WHILE           | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 29    | PACKED          | 0     | Const | 0     | 0     | 1     | 0     | 0     |
+| 30    | integer         | 0     | Type | 1     | 0     | 1     | 0     | 1     |
+| 31    | real            | 30    | Type | 2     | 0     | 1     | 0     | 1     |
+| 32    | boolean         | 31    | Type | 3     | 0     | 1     | 0     | 1     |
+| 33    | char            | 32    | Type | 4     | 0     | 1     | 0     | 1     |
+| 34    | string          | 33    | Type | 5     | 0     | 1     | 0     | 1     |
+| 35    | write           | 34    | Proc | 0     | 0     | 1     | 0     | 0     |
+| 36    | writeln         | 35    | Proc | 0     | 0     | 1     | 0     | 0     |
+| 37    | read            | 36    | Proc | 0     | 0     | 1     | 0     | 0     |
+| 38    | readln          | 37    | Proc | 0     | 0     | 1     | 0     | 0     |
+| 39    | ScopeRecursion  | 38    | Prog | 0     | 0     | 1     | 0     | 0     |
+| 40    | LIMIT           | 39    | Const | 1     | 0     | 1     | 0     | 10    |
+| 41    | global_val      | 40    | Var | 1     | 0     | 1     | 0     | 0     |
+| 42    | counter         | 41    | Var | 1     | 0     | 1     | 0     | 1     |
+| 43    | hasil_fib       | 42    | Var | 1     | 0     | 1     | 0     | 2     |
+| 44    | Fibonacci       | 43    | Func | 1     | 1     | 1     | 0     | 0     |
+| 45    | n               | 0     | Var | 1     | 0     | 1     | 1     | 0     |
+| 46    | Fibonacci       | 45    | Var | 1     | 0     | 1     | 1     | 0     |
+| 47    | OuterProc       | 44    | Proc | 0     | 2     | 1     | 0     | 0     |
+| 48    | x               | 0     | Var | 1     | 0     | 0     | 1     | 0     |
+| 49    | local_outer     | 48    | Var | 1     | 0     | 1     | 1     | 0     |
+| 50    | InnerProc       | 49    | Proc | 0     | 3     | 1     | 1     | 0     |
+| 51    | y               | 0     | Var | 1     | 0     | 1     | 2     | 0     |
+| 52    | global_val      | 51    | Var | 1     | 0     | 1     | 2     | 0     |
+-----------------------------------------------------------------------------------------------
+
+-------------------- BTAB (Blocks) --------------------
+| Idx   | Last  | LPar  | PSze  | VSze  |
+|-----------------------------------------------------|
+| 0     | 47    | 0     | 0     | 3     |
+| 1     | 46    | 45    | 0     | 1     |
+| 2     | 50    | 48    | 0     | 1     |
+| 3     | 52    | 51    | 0     | 1     |
+| 4     | 0     | 0     | 0     | 0     |
+-------------------------------------------------------
+
+[ATAB is empty]
+>> Decorated AST:
+ProgramNode(name: 'ScopeRecursion')
+├── Declarations
+│   ├── ConstDecl('LIMIT' = 10) -> type:Integer
+│   ├── VarDecl('global_val') -> type:Integer
+│   ├── VarDecl('counter') -> type:Integer
+│   ├── VarDecl('hasil_fib') -> type:Integer
+│   ├── Function('Fibonacci') -> type:Integer
+│   │   ├── Params
+│   │   │   └── n: Integer
+│   │   ├── Declarations
+│   │   └── Body
+│   │       └── If
+│   │           ├── cond BinOp 'Lte' -> type:Boolean
+│   │           │   ├── Variable('n') -> tab_index:45, type:Integer
+│   │           │   └── Number(1) -> type:Integer
+│   │           ├── then
+│   │           │   └── Assign(''Fibonacci' := 'n'') -> tab_index:46, type:Integer
+│   │           │       ├── target Variable('Fibonacci') -> tab_index:46, type:Integer
+│   │           │       └── value Variable('n') -> tab_index:45, type:Integer
+│   │           └── else
+│   │               └── Assign(''Fibonacci' := Fibonacci() Add Fibonacci()') -> tab_index:46, type:Integer
+│   │                   ├── target Variable('Fibonacci') -> tab_index:46, type:Integer
+│   │                   └── value BinOp 'Add' -> type:Integer
+│   │                       ├── FuncCall('Fibonacci') -> type:Integer
+│   │                       │   └── BinOp 'Sub' -> type:Integer
+│   │                       │       ├── Variable('n') -> tab_index:45, type:Integer
+│   │                       │       └── Number(1) -> type:Integer
+│   │                       └── FuncCall('Fibonacci') -> type:Integer
+│   │                           └── BinOp 'Sub' -> type:Integer
+│   │                               ├── Variable('n') -> tab_index:45, type:Integer
+│   │                               └── Number(2) -> type:Integer
+│   └── Procedure('OuterProc')
+│       ├── Params
+│       │   └── var x: Integer
+│       ├── Declarations
+│       │   ├── VarDecl('local_outer') -> type:Integer
+│       │   └── Procedure('InnerProc')
+│       │       ├── Params
+│       │       │   └── y: Integer
+│       │       ├── Declarations
+│       │       │   └── VarDecl('global_val') -> type:Integer
+│       │       └── Body
+│       │           ├── Assign(''global_val' := 999') -> tab_index:52, type:Integer
+│       │           │   ├── target Variable('global_val') -> tab_index:52, type:Integer
+│       │           │   └── value Number(999) -> type:Integer
+│       │           ├── Assign(''local_outer' := 'y' Add 'global_val'') -> tab_index:49, type:Integer
+│       │           │   ├── target Variable('local_outer') -> tab_index:49, type:Integer
+│       │           │   └── value BinOp 'Add' -> type:Integer
+│       │           │       ├── Variable('y') -> tab_index:51, type:Integer
+│       │           │       └── Variable('global_val') -> tab_index:52, type:Integer
+│       │           └── Assign(''x' := 'x' Add 'local_outer'') -> tab_index:48, type:Integer
+│       │               ├── target Variable('x') -> tab_index:48, type:Integer
+│       │               └── value BinOp 'Add' -> type:Integer
+│       │                   ├── Variable('x') -> tab_index:48, type:Integer
+│       │                   └── Variable('local_outer') -> tab_index:49, type:Integer
+│       └── Body
+│           ├── Assign(''local_outer' := 0') -> tab_index:49, type:Integer
+│           │   ├── target Variable('local_outer') -> tab_index:49, type:Integer
+│           │   └── value Number(0) -> type:Integer
+│           └── Call('InnerProc')
+│               └── arg[0] Number(5) -> type:Integer
+└── Block
+    ├── Assign(''global_val' := 100') -> tab_index:41, type:Integer
+    │   ├── target Variable('global_val') -> tab_index:41, type:Integer
+    │   └── value Number(100) -> type:Integer
+    ├── Assign(''counter' := 10') -> tab_index:42, type:Integer
+    │   ├── target Variable('counter') -> tab_index:42, type:Integer
+    │   └── value Number(10) -> type:Integer
+    ├── Assign(''hasil_fib' := Fibonacci()') -> tab_index:43, type:Integer
+    │   ├── target Variable('hasil_fib') -> tab_index:43, type:Integer
+    │   └── value FuncCall('Fibonacci') -> type:Integer
+    │       └── Number(6) -> type:Integer
+    ├── Call('writeln')
+    │   ├── arg[0] String('Fibonacci(6) = ') -> type:String
+    │   └── arg[1] Variable('hasil_fib') -> tab_index:43, type:Integer
+    ├── Call('OuterProc')
+    │   └── arg[0] Variable('counter') -> tab_index:42, type:Integer
+    └── If
+        ├── cond BinOp 'And' -> type:Boolean
+        │   ├── BinOp 'Eq' -> type:Boolean
+        │   │   ├── Variable('counter') -> tab_index:42, type:Integer
+        │   │   └── Number(1014) -> type:Integer
+        │   └── BinOp 'Eq' -> type:Boolean
+        │       ├── Variable('global_val') -> tab_index:41, type:Integer
+        │       └── Number(100) -> type:Integer
+        ├── then
+        │   └── Call('writeln')
+        │       └── arg[0] String('Scope & Shadowing Test: SUKSES') -> type:String
+        └── else
+            └── Call('writeln')
+                └── arg[0] String('Scope & Shadowing Test: GAGAL') -> type:String
