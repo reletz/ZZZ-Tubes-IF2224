@@ -269,6 +269,28 @@ impl SymbolTable {
         for (i, entry) in self.tab.iter().enumerate() {
             if i == 0 { continue; } 
 
+            // Format adr based on entry type
+            let adr_display = match entry.obj {
+                ObjectKind::Constant => {
+                    // Constants: show signed value
+                    format!("{}", entry.adr as u32 as i32)
+                },
+                ObjectKind::Type if entry.ref_idx == 0 && (entry.typ == TYP_INT || entry.typ == TYP_CHAR) => {
+                    // Subrange type: unpack and show bounds
+                    let low = (entry.adr & 0xFFFF) as u16 as i16 as i32;
+                    let high = ((entry.adr >> 16) & 0xFFFF) as u16 as i16 as i32;
+                    if entry.adr != 0 {
+                        format!("{}..{}", low, high)
+                    } else {
+                        "0".to_string()
+                    }
+                },
+                _ => {
+                    // Everything else: show as-is
+                    format!("{}", entry.adr)
+                }
+            };
+            
             println!("| {:<5} | {:<15} | {:<5} | {:<6} | {:<5} | {:<5} | {:<5} | {:<5} | {:<5} |",
                 i,
                 if entry.name.is_empty() { "<empty>" } else { &entry.name },
@@ -278,7 +300,7 @@ impl SymbolTable {
                 entry.ref_idx,
                 if entry.normal { 1 } else { 0 },
                 entry.level,
-                entry.adr
+                adr_display
             );
         }
         println!("{:-^95}", "");

@@ -1,4 +1,3 @@
-use crate::parser::parse_tree::Type;
 use crate::semantic_analyzer::ast::ast::{
     ProgramAST, Decl, Stmt, Expr, ExprKind, TypeKind, BinOp, UnOp, BlockStmt, Param
 };
@@ -80,7 +79,7 @@ impl SemanticAnalyzer {
                             ));
                         }
                         let type_idx = self.kind_to_typ_idx(&type_kind);
-                        let const_value = self.eval_const_expr(value).unwrap_or(0) as usize;
+                        let const_value = Self::i32_to_usize(self.eval_const_expr(value).unwrap_or(0));
                         // 2. Masukkan ke tabel
                         self.symbol_table.enter(name.clone(), ObjectKind::Constant, type_idx, const_value, true);
                     }
@@ -319,7 +318,7 @@ impl SemanticAnalyzer {
 
     /// Check if identifier is already declared in current scope
     fn check_redeclaration(&mut self, name: &str, line: usize, column: usize) -> bool {
-        if let Some(idx) = self.symbol_table.find_in_current_scope(name) {
+        if let Some(_idx) = self.symbol_table.find_in_current_scope(name) {
             self.report_error(SemanticError::new(
                 SemanticErrorKind::RedeclaredIdentifier(name.to_string()),
                 line, column
@@ -574,166 +573,6 @@ impl SemanticAnalyzer {
         }
     }
 
-    /// Strict binary operator type checking
-    fn check_binary_op(
-        &self, 
-        op: BinOp, 
-        left: &TypeKind, 
-        right: &TypeKind,
-        line: usize, 
-        col: usize
-    ) -> Result<TypeKind, SemanticError> {
-        match op {
-            // Arithmetic: +, -, *
-            BinOp::Add | BinOp::Sub | BinOp::Mul => {
-                match (left, right) {
-                    (TypeKind::Integer, TypeKind::Integer) => Ok(TypeKind::Integer),
-                    (TypeKind::Integer, TypeKind::Real) |
-                    (TypeKind::Real, TypeKind::Integer) |
-                    (TypeKind::Real, TypeKind::Real) => Ok(TypeKind::Real),
-                    // String concatenation (only for Add)
-                    (TypeKind::String, TypeKind::String) if op == BinOp::Add => Ok(TypeKind::String),
-                    (TypeKind::String, TypeKind::Char) if op == BinOp::Add => Ok(TypeKind::String),
-                    (TypeKind::Char, TypeKind::String) if op == BinOp::Add => Ok(TypeKind::String),
-                    _ => Err(SemanticError::new(
-                        SemanticErrorKind::InvalidOperation {
-                            op: format!("{:?}", op),
-                            left_type: left.to_string(),
-                            right_type: right.to_string()
-                        },
-                        line, col
-                    ))
-                }
-            },
-            
-            // Real division: /
-            BinOp::DivReal => {
-                match (left, right) {
-                    (TypeKind::Integer, TypeKind::Integer) |
-                    (TypeKind::Integer, TypeKind::Real) |
-                    (TypeKind::Real, TypeKind::Integer) |
-                    (TypeKind::Real, TypeKind::Real) => Ok(TypeKind::Real),
-                    _ => Err(SemanticError::new(
-                        SemanticErrorKind::TypeMismatch { 
-                            expected: "Numeric".into(), 
-                            found: format!("{} and {}", left, right)
-                        },
-                        line, col
-                    ))
-                }
-            },
-            
-            // Integer division and modulo: div, mod
-            BinOp::DivInt | BinOp::Mod => {
-                match (left, right) {
-                    (TypeKind::Integer, TypeKind::Integer) => Ok(TypeKind::Integer),
-                    _ => Err(SemanticError::new(
-                        SemanticErrorKind::TypeMismatch { 
-                            expected: "Integer".into(), 
-                            found: format!("{} and {}", left, right)
-                        },
-                        line, col
-                    ))
-                }
-            },
-            
-            // Relational: =, <>, <, <=, >, >=
-            BinOp::Eq | BinOp::Neq => {
-                // Allow comparison of same types, or numeric types
-                if left == right {
-                    Ok(TypeKind::Boolean)
-                } else if self.is_numeric(left) && self.is_numeric(right) {
-                    Ok(TypeKind::Boolean)
-                } else {
-                    Err(SemanticError::new(
-                        SemanticErrorKind::TypeMismatch { 
-                            expected: left.to_string(), 
-                            found: right.to_string()
-                        },
-                        line, col
-                    ))
-                }
-            },
-            
-            BinOp::Lt | BinOp::Lte | BinOp::Gt | BinOp::Gte => {
-                match (left, right) {
-                    // Numeric comparisons
-                    (TypeKind::Integer, TypeKind::Integer) |
-                    (TypeKind::Integer, TypeKind::Real) |
-                    (TypeKind::Real, TypeKind::Integer) |
-                    (TypeKind::Real, TypeKind::Real) => Ok(TypeKind::Boolean),
-                    // Char comparisons
-                    (TypeKind::Char, TypeKind::Char) => Ok(TypeKind::Boolean),
-                    // String comparisons
-                    (TypeKind::String, TypeKind::String) => Ok(TypeKind::Boolean),
-                    _ => Err(SemanticError::new(
-                        SemanticErrorKind::TypeMismatch { 
-                            expected: "Comparable types".into(), 
-                            found: format!("{} and {}", left, right)
-                        },
-                        line, col
-                    ))
-                }
-            },
-            
-            // Logical: and, or
-            BinOp::And | BinOp::Or => {
-                match (left, right) {
-                    (TypeKind::Boolean, TypeKind::Boolean) => Ok(TypeKind::Boolean),
-                    _ => Err(SemanticError::new(
-                        SemanticErrorKind::TypeMismatch { 
-                            expected: "Boolean".into(), 
-                            found: format!("{} and {}", left, right)
-                        },
-                        line, col
-                    ))
-                }
-            },
-        }
-    }
-
-    /// Strict unary operator type checking
-    fn check_unary_op(
-        &self,
-        op: UnOp,
-        operand_type: &TypeKind,
-        line: usize,
-        col: usize
-    ) -> Result<TypeKind, SemanticError> {
-        match op {
-            UnOp::Not => {
-                if *operand_type == TypeKind::Boolean {
-                    Ok(TypeKind::Boolean)
-                } else {
-                    Err(SemanticError::new(
-                        SemanticErrorKind::TypeMismatch { 
-                            expected: "Boolean".into(), 
-                            found: operand_type.to_string() 
-                        },
-                        line, col
-                    ))
-                }
-            },
-            UnOp::Neg | UnOp::Plus => {
-                match operand_type {
-                    TypeKind::Integer => Ok(TypeKind::Integer),
-                    TypeKind::Real => Ok(TypeKind::Real),
-                    _ => Err(SemanticError::new(
-                        SemanticErrorKind::TypeMismatch { 
-                            expected: "Numeric".into(), 
-                            found: operand_type.to_string() 
-                        },
-                        line, col
-                    ))
-                }
-            },
-        }
-    }
-
-    fn is_numeric(&self, t: &TypeKind) -> bool {
-        matches!(t, TypeKind::Integer | TypeKind::Real)
-    }
-
     // ==========================================
     // Anggota 3: Statements & Flow Control
     // ==========================================
@@ -955,10 +794,6 @@ impl SemanticAnalyzer {
             },
             Stmt::Compound(block) => self.visit_block(block),
         }
-    }
-
-    fn is_ordinal_type(&self, t: &TypeKind) -> bool {
-        matches!(t, TypeKind::Integer | TypeKind::Char | TypeKind::Boolean)
     }
 
     /// Check type compatibility for assignments
@@ -1248,7 +1083,7 @@ impl SemanticAnalyzer {
                     let entry = &self.symbol_table.tab[idx];
                     if entry.obj == ObjectKind::Constant {
                         // return adr as adr stores the val
-                        return Some(entry.adr as i32);
+                        return Some(Self::usize_to_i32(entry.adr));
                     }
                 }
                 None
@@ -1283,6 +1118,18 @@ impl SemanticAnalyzer {
         let low = (packed & 0xFFFF) as u16 as i16 as i32;
         let high = ((packed >> 16) & 0xFFFF) as u16 as i16 as i32;
         (low, high)
+    }
+
+    // Store: i32 -> usize (bit-preserving)
+    #[inline]
+    fn i32_to_usize(val: i32) -> usize {
+        val as i32 as u32 as usize
+    }
+
+    // Retrieve: usize -> i32 (bit-preserving)  
+    #[inline]
+    fn usize_to_i32(val: usize) -> i32 {
+        val as u32 as i32
     }
 
     pub fn print_tables(&self) {
