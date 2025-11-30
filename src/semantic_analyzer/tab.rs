@@ -93,27 +93,40 @@ impl SymbolTable {
         st.display[0] = 0; 
 
         // 2. Inisialisasi Tipe Primitif (Index 1-5)
-        st.init_primitives();
+        st.tab.push(TabEntry {
+            name: "".to_string(), link: 0, obj: ObjectKind::Type, typ: TYP_NOTYPE, 
+            ref_idx: 0, normal: true, level: 0, adr: 0,
+        });
+
+        // 3. Reserved Words
+        let reserved_words = vec![
+            "AND", "ARRAY", "BEGIN", "CASE", "CONST", "DIV", "DOWNTO", "DO", "ELSE", "END",
+            "FOR", "FUNCTION", "IF", "MOD", "NOT", "OF", "OR", "PROCEDURE", "PROGRAM",
+            "RECORD", "REPEAT", "STRING", "THEN", "TO", "TYPE", "UNTIL", "VAR", "WHILE", "PACKED"
+        ];
+
+        // 4. Masukkan reserved words ke tabel
+        for kw in reserved_words {
+            st.tab.push(TabEntry {
+                name: kw.to_string(),
+                link: 0,
+                obj: ObjectKind::Constant,
+                typ: TYP_NOTYPE,
+                ref_idx: 0,
+                normal: true,
+                level: 0,
+                adr: 0,
+            });
+        }
 
         // 3. Inisialisasi Standard Procedures (writeln, readln, dll)
+        st.init_primitives();
         st.init_standard_procedures();
 
         st
     }
 
     fn init_primitives(&mut self) {
-        // Dummy entry 0 (Sentinel)
-        self.tab.push(TabEntry {
-            name: "".to_string(),
-            link: 0,
-            obj: ObjectKind::Type,
-            typ: TYP_NOTYPE,
-            ref_idx: 0,
-            normal: true,
-            level: 0,
-            adr: 0,
-        });
-
         // Masukkan tipe dasar secara berurutan (Index 1..5)
         // Fungsi add_system_entry akan otomatis me-link ke btab[0]
         self.add_system_entry("integer", ObjectKind::Type, TYP_INT, 1);
@@ -254,18 +267,16 @@ impl SymbolTable {
         println!("|{:-<93}|", "");
 
         for (i, entry) in self.tab.iter().enumerate() {
-            // Skip dummy entry 0 jika ingin persis spesifikasi (biasanya mulai dari index 1 atau system)
-            // Tapi untuk debug, print semua lebih baik.
             if i == 0 { continue; } 
 
             println!("| {:<5} | {:<15} | {:<5} | {:<6} | {:<5} | {:<5} | {:<5} | {:<5} | {:<5} |",
                 i,
                 if entry.name.is_empty() { "<empty>" } else { &entry.name },
                 entry.link,
-                entry.obj,   // Menggunakan impl Display di atas
+                entry.obj,
                 entry.typ,
                 entry.ref_idx,
-                if entry.normal { 1 } else { 0 }, // Spec: 1=normal, 0=var
+                if entry.normal { 1 } else { 0 },
                 entry.level,
                 entry.adr
             );
