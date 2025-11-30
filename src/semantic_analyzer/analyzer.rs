@@ -734,8 +734,13 @@ impl SemanticAnalyzer {
                 self.visit_stmt(body);
             },
             Stmt::For { iterator, start, end, direction: _, body, line, column } => {
-                // Search iterator variable di symbol table
-                match self.symbol_table.find(iterator) {
+                let idx_option = if self.symbol_table.level > 0 {
+                    self.symbol_table.find_in_current_scope(iterator)
+                } else {
+                    self.symbol_table.find(iterator)
+                };
+
+                match idx_option {
                     Some(idx) => {
                         let entry = &self.symbol_table.tab[idx];
                         let iter_type = self.typ_idx_to_kind(entry.typ);
@@ -747,10 +752,17 @@ impl SemanticAnalyzer {
                         }
                     }
                     None => {
-                        self.report_error(SemanticError::new(
-                            SemanticErrorKind::UndefinedIdentifier(iterator.clone()), 
-                            *line, *column
-                        ));
+                        if self.symbol_table.find(iterator).is_some() {
+                             self.report_error(SemanticError::new(
+                                SemanticErrorKind::InvalidIterator(iterator.clone()), 
+                                *line, *column
+                            ));
+                        } else {
+                             self.report_error(SemanticError::new(
+                                SemanticErrorKind::UndefinedIdentifier(iterator.clone()), 
+                                *line, *column
+                            ));
+                        }
                     }
                 }
 
@@ -785,8 +797,7 @@ impl SemanticAnalyzer {
                     Ok(_) => true
                 };
 
-                // Still visit body even if bounds are wrong
-                let _ = (start_ok, end_ok); // suppress unused warning
+                let _ = (start_ok, end_ok);
                 self.visit_stmt(body);
             },
             Stmt::Repeat { body, condition, .. } => {

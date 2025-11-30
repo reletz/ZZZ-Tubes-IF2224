@@ -1,2 +1,7 @@
 >> Parsing Berhasil!
 >> AST Berhasil dibangun.
+>> Analisis Semantik GAGAL dengan 4 error:
+  [1] SemanticError at 17:5: Iterator 'global_counter' harus berupa variabel lokal bertipe ordinal.
+  [2] SemanticError at 20:10: Array index 6 di luar jangkauan [1..5]
+  [3] SemanticError at 21:10: Array index 0 di luar jangkauan [1..5]
+  [4] SemanticError at 26:15: Argument 1 is a Constant, cannot be passed to 'var' parameter
