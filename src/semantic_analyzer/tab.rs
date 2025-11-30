@@ -154,7 +154,7 @@ impl SymbolTable {
     }
 
     /// Memasukkan identifier baru ke tabel 'tab'
-    pub fn enter(&mut self, name: String, obj: ObjectKind, typ: usize, adr: usize) -> usize {
+    pub fn enter(&mut self, name: String, obj: ObjectKind, typ: usize, adr: usize, normal: bool) -> usize {
         // 1. Ambil indeks blok aktif saat ini dari display
         let current_btab_idx = self.display[self.level];
         // 2. Ambil 'last' identifier dari blok tersebut (untuk linked list)
@@ -167,7 +167,7 @@ impl SymbolTable {
             obj,
             typ,
             ref_idx: 0,    // Default 0, diupdate manual nanti jika perlu (misal array/proc)
-            normal: true,  // Default true, diubah nanti jika parameter 'var'
+            normal,
             level: self.level,
             adr,
         };
@@ -303,5 +303,20 @@ impl SymbolTable {
         } else {
             println!("\n[ATAB is empty]");
         }
+    }
+
+    /// Nyari identifier hanya di dalam scope (gk sampe parent)
+    pub fn find_in_current_scope(&self, name: &str) -> Option<usize> {
+        let current_btab = self.display[self.level];
+        let mut idx = self.btab[current_btab].last;
+        
+        while idx != 0 {
+            if self.tab[idx].name.to_lowercase() == name.to_lowercase() {
+                return Some(idx);
+            }
+            idx = self.tab[idx].link;
+        }
+        
+        None
     }
 }

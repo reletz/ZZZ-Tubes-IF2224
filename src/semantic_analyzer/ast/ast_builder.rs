@@ -139,7 +139,7 @@ impl ASTBuilder {
     fn process_param_group(group: &cst::FormalParameterGroup, ast_params: &mut Vec<ast::Param>) -> Result<(), SemanticError> {
         // TODO: Logic cek 'var' (by reference)
         // Tunggu QnA dijawab / Parser update
-        let is_var = false; 
+        let is_var = group.var_kw.is_some();
 
         let mut names = Vec::new();
         names.push(group.identifiers.initial_id.value.clone());

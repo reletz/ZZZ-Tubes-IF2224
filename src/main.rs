@@ -77,8 +77,11 @@ fn main() {
             println!(">> Decorated AST:");
             ASTPrinter::print(&ast);
         },
-        Err(e) => {
-            eprintln!(">> Semantic Error: {}", e);
+        Err(errors) => {
+            eprintln!(">> Analisis Semantik GAGAL dengan {} error:", errors.len());
+            for (i, e) in errors.iter().enumerate() {
+                eprintln!("  [{}] {}", i + 1, e);
+            }
             process::exit(1);
         }
     }

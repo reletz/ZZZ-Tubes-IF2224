@@ -175,6 +175,7 @@
     "turun_ke": "Keyword",
     "ulangi": "Keyword",
     "untuk": "Keyword",
-    "variabel": "Keyword"
+    "variabel": "Keyword",
+    "var": "Keyword"
   }
 }
