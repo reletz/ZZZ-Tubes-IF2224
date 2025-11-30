@@ -215,8 +215,8 @@ impl Expr {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)] // <-- Tambahkan ini
+#[derive(Debug, Clone, Copy, PartialEq)] // <-- Tambahkan ini
 pub enum BinOp { Add, Sub, Mul, DivReal, DivInt, Mod, And, Or, Eq, Neq, Lt, Gt, Lte, Gte }
 
-#[derive(Debug, Clone, PartialEq)] // <-- Tambahkan ini
+#[derive(Debug, Clone, Copy, PartialEq)] // <-- Tambahkan ini
 pub enum UnOp { Plus, Neg, Not }
