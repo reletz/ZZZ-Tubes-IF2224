@@ -23,28 +23,38 @@ pub struct ProgramAST {
 pub enum Decl {
     Constant {
         name: String,
-        value: Expr
+        value: Expr,
+        line: usize,
+        column: usize,
     },
     Type {
         name: String,
-        wrapped_type: TypeKind
+        wrapped_type: TypeKind,
+        line: usize,
+        column: usize,
     },
     Variable {
         name: Vec<String>,
-        type_kind: TypeKind
+        type_kind: TypeKind,
+        line: usize,
+        column: usize,
     },
     Procedure { 
         name: String, 
         params: Vec<Param>, 
         local_decls: Vec<Decl>, 
-        body: BlockStmt 
+        body: BlockStmt,
+        line: usize,
+        column: usize,
     },
     Function { 
         name: String, 
         params: Vec<Param>, 
         return_type: TypeKind, 
         local_decls: Vec<Decl>, 
-        body: BlockStmt 
+        body: BlockStmt,
+        line: usize,
+        column: usize, 
     }
 }
 
@@ -91,36 +101,50 @@ impl fmt::Display for TypeKind {
 pub enum Stmt {
     Assignment {
         target: Expr,
-        value: Expr
+        value: Expr,
+        line: usize,
+        column: usize,
     },
     ProcedureCall {
         name: String,
-        args: Vec<Expr>
+        args: Vec<Expr>,
+        line: usize,
+        column: usize,
     },
     If {
         condition: Expr,
         then_branch: Box<Stmt>,
-        else_branch: Option<Box<Stmt>>
+        else_branch: Option<Box<Stmt>>,
+        line: usize,
+        column: usize,
     },
     While {
         condition: Expr,
-        body: Box<Stmt>
+        body: Box<Stmt>,
+        line: usize,
+        column: usize,
     },
     For {
         iterator: String,
         start: Expr,
         end: Expr,
         direction: ForDirection,
-        body: Box<Stmt>
+        body: Box<Stmt>,
+        line: usize,
+        column: usize,
     },
     Repeat {
         body: Vec<Stmt>,
-        condition: Expr
+        condition: Expr,
+        line: usize,
+        column: usize,
     },
     Case {
         operand: Expr,
         branches: Vec<CaseBranch>,
-        else_branch: Option<Vec<Stmt>>
+        else_branch: Option<Vec<Stmt>>,
+        line: usize,
+        column: usize,
     },
     Compound(BlockStmt)
 }
@@ -146,6 +170,8 @@ pub enum ForDirection {
 pub struct Expr {
     pub kind: ExprKind,
     pub annotation: SemanticData,
+    pub line: usize, 
+    pub column: usize,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -179,10 +205,12 @@ pub enum ExprKind {
 }
 
 impl Expr {
-    pub fn new(kind: ExprKind) -> Self {
+    pub fn new(kind: ExprKind, line: usize, column: usize) -> Self {
         Expr {
             kind,
             annotation: SemanticData::new(),
+            line,
+            column,
         }
     }
 }

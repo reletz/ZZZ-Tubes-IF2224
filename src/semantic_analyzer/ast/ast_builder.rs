@@ -23,6 +23,8 @@ impl ASTBuilder {
                 ast_decls.push(ast::Decl::Constant {
                     name: constant.name.value.clone(),
                     value: Self::build_expr(&constant.value)?,
+                    line: constant.name.line,
+                    column: constant.name.column,
                 });
             }
         }
@@ -33,6 +35,8 @@ impl ASTBuilder {
                 ast_decls.push(ast::Decl::Type {
                     name: type_def.name.value.clone(),
                     wrapped_type: Self::build_type(&type_def.type_def)?,
+                    line: type_def.name.line,
+                    column: type_def.name.column,
                 });
             }
         }
@@ -52,6 +56,8 @@ impl ASTBuilder {
                 ast_decls.push(ast::Decl::Variable {
                     name: names,
                     type_kind,
+                    line: group.identifiers.initial_id.line,
+                    column: group.identifiers.initial_id.column,
                 });
             }
         }
@@ -98,6 +104,8 @@ impl ASTBuilder {
                     params: Self::build_params(&proc.parameters)?,
                     local_decls: Self::build_declarations(&proc.declarations)?,
                     body: Self::build_block(&proc.body)?,
+                    line: proc.proc_kw.line,
+                    column: proc.proc_kw.column,
                 })
             },
             cst::SubprogramDeclaration::Function(func) => {
@@ -107,6 +115,8 @@ impl ASTBuilder {
                     return_type: Self::build_type(&func.return_type)?,
                     local_decls: Self::build_declarations(&func.declarations)?,
                     body: Self::build_block(&func.body)?,
+                    line: func.func_kw.line,
+                    column: func.func_kw.column,
                 })
             }
         }
@@ -165,6 +175,8 @@ impl ASTBuilder {
                 Ok(ast::Stmt::Assignment {
                     target: Self::build_expr(&assign.variable)?,
                     value: Self::build_expr(&assign.expression)?,
+                    line: assign.assign_op.line,
+                    column: assign.assign_op.column,
                 })
             },
             cst::Statement::Compound(block) => {
@@ -179,12 +191,16 @@ impl ASTBuilder {
                     } else {
                         None
                     },
+                    line: if_stmt.if_kw.line,
+                    column: if_stmt.if_kw.column,
                 })
             },
             cst::Statement::While(while_stmt) => {
                 Ok(ast::Stmt::While {
                     condition: Self::build_expr(&while_stmt.condition)?,
                     body: Box::new(Self::build_stmt(&while_stmt.body)?),
+                    line: while_stmt.while_kw.line,
+                    column: while_stmt.while_kw.column,
                 })
             },
             cst::Statement::For(for_stmt) => {
@@ -200,6 +216,8 @@ impl ASTBuilder {
                     end: Self::build_expr(&for_stmt.end_value)?,
                     direction,
                     body: Box::new(Self::build_stmt(&for_stmt.body)?),
+                    line: for_stmt.for_kw.line,
+                    column: for_stmt.for_kw.column,
                 })
             },
             cst::Statement::ProcedureCall(call_stmt) => {
@@ -212,6 +230,8 @@ impl ASTBuilder {
                 Ok(ast::Stmt::ProcedureCall {
                     name: call_stmt.call.function_name.value.clone(),
                     args,
+                    line: call_stmt.call.function_name.line,
+                    column: call_stmt.call.function_name.column,
                 })
             },
             cst::Statement::Repeat(repeat_stmt) => {
@@ -226,6 +246,8 @@ impl ASTBuilder {
                 Ok(ast::Stmt::Repeat {
                     body: stmts,
                     condition: Self::build_expr(&repeat_stmt.condition)?,
+                    line: repeat_stmt.repeat_kw.line,
+                    column: repeat_stmt.repeat_kw.column,
                 })
             },
             cst::Statement::Case(case_stmt) => {
@@ -259,6 +281,8 @@ impl ASTBuilder {
                     operand: Self::build_expr(&case_stmt.expression)?,
                     branches,
                     else_branch,
+                    line: case_stmt.case_kw.line,
+                    column: case_stmt.case_kw.column,
                 })
             },
         }
@@ -269,12 +293,17 @@ impl ASTBuilder {
         
         for (op, right_simple) in &expr.rest {
             let right = Self::build_simple_expr(right_simple)?;
+            
+            // Simpan posisi sebelum `left` dipindahkan (moved)
+            let line = left.line;
+            let col = left.column;
+
             let kind = ast::ExprKind::Binary {
                 left: Box::new(left), 
                 op: Self::map_bin_op(op)?,
                 right: Box::new(right),
             };
-            left = ast::Expr::new(kind);
+            left = ast::Expr::new(kind, line, col);
         }
         Ok(left)
     }
@@ -284,12 +313,16 @@ impl ASTBuilder {
         
         for (op, right_term) in &simple.rest {
             let right = Self::build_term(right_term)?;
+
+            let line = left.line;
+            let col = left.column;
+
             let kind = ast::ExprKind::Binary {
                 left: Box::new(left),
                 op: Self::map_bin_op(op)?,
                 right: Box::new(right),
             };
-            left = ast::Expr::new(kind);
+            left = ast::Expr::new(kind, line, col);
         }
         Ok(left)
     }
@@ -299,20 +332,24 @@ impl ASTBuilder {
         
         for (op, right_factor) in &term.rest {
             let right = Self::build_factor(right_factor)?;
+
+            let line = left.line;
+            let col = left.column;
+
             let kind = ast::ExprKind::Binary {
                 left: Box::new(left),
                 op: Self::map_bin_op(op)?,
                 right: Box::new(right),
             };
-            left = ast::Expr::new(kind);
+            left = ast::Expr::new(kind, line, col);
         }
         Ok(left)
     }
 
     fn build_factor(factor: &cst::Factor) -> Result<ast::Expr, SemanticError> {
-        let kind = match factor {
+        let (kind, line, col) = match factor {
             cst::Factor::Literal(lit) => {
-                match lit.token.token_type {
+                let k = match lit.token.token_type {
                     TokenType::IntegerLiteral => {
                         ast::ExprKind::LiteralInt(lit.token.value.parse().unwrap_or(0))
                     },
@@ -334,26 +371,37 @@ impl ASTBuilder {
                         lit.token.line,
                         lit.token.column
                     )),
-                }
+                };
+                (k, lit.token.line, lit.token.column)
             },
             cst::Factor::Identifier(tok) => {
-                ast::ExprKind::Variable(tok.value.clone())
+                (ast::ExprKind::Variable(tok.value.clone()), tok.line, tok.column)
             },
             cst::Factor::Parenthesized(paren) => {
                 return Self::build_expr(&paren.expr);
             },
             cst::Factor::Not(not_factor) => {
-                ast::ExprKind::Unary {
-                    op: ast::UnOp::Not,
-                    operand: Box::new(Self::build_factor(&not_factor.factor)?)
-                }
+                let inner = Self::build_factor(&not_factor.factor)?;
+                (
+                    ast::ExprKind::Unary {
+                        op: ast::UnOp::Not,
+                        operand: Box::new(inner)
+                    },
+                    not_factor.not_token.line,
+                    not_factor.not_token.column
+                )
             },
             cst::Factor::ArithmeticUnary(unary) => {
                 let op = if unary.op.value == "+" { ast::UnOp::Plus } else { ast::UnOp::Neg };
-                ast::ExprKind::Unary {
-                    op,
-                    operand: Box::new(Self::build_factor(&unary.factor)?)
-                }
+                let inner = Self::build_factor(&unary.factor)?;
+                (
+                    ast::ExprKind::Unary {
+                        op,
+                        operand: Box::new(inner)
+                    },
+                    unary.op.line,
+                    unary.op.column
+                )
             },
             cst::Factor::FunctionCall(call_node) => {
                  let args = if let Some(arg_list) = &call_node.arguments {
@@ -361,20 +409,30 @@ impl ASTBuilder {
                 } else {
                     Vec::new()
                 };
-                ast::ExprKind::FunctionCall {
-                    name: call_node.function_name.value.clone(),
-                    args
-                }
+                (
+                    ast::ExprKind::FunctionCall {
+                        name: call_node.function_name.value.clone(),
+                        args
+                    },
+                    call_node.function_name.line,
+                    call_node.function_name.column
+                )
             },
             cst::Factor::ArrayAccess(access) => {
-                ast::ExprKind::ArrayAccess {
-                    array: Box::new(Self::build_expr(&access.array)?),
-                    index: Box::new(Self::build_expr(&access.index)?),
-                }
+                let array_expr = Self::build_expr(&access.array)?;
+                let l = array_expr.line;
+                let c = array_expr.column;
+                (
+                    ast::ExprKind::ArrayAccess {
+                        array: Box::new(array_expr),
+                        index: Box::new(Self::build_expr(&access.index)?),
+                    },
+                    l, c
+                )
             }
         };
         
-        Ok(ast::Expr::new(kind))
+        Ok(ast::Expr::new(kind, line, col))
     }
 
     fn build_arg_list(list: &cst::ActualParameterList) -> Result<Vec<ast::Expr>, SemanticError> {
