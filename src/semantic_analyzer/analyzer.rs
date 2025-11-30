@@ -990,7 +990,8 @@ impl SemanticAnalyzer {
                 let el_size = self.symbol_table.tab[el_idx].adr; 
                 let atab_idx = self.symbol_table.make_array(idx_typ, el_idx, 0, low, high, el_size);
                 
-                let type_idx = self.symbol_table.enter("".to_string(), ObjectKind::Type, TYP_NOTYPE, 0, true); 
+                let internal_name = format!("$arr_{}", atab_idx);
+                let type_idx = self.symbol_table.enter(internal_name, ObjectKind::Type, TYP_NOTYPE, 0, true); 
                 
                 let total_size = self.symbol_table.atab[atab_idx].size;
                 let last = self.symbol_table.tab.len() - 1;
