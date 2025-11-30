@@ -27,7 +27,7 @@ impl SemanticAnalyzer {
     fn visit_program(&mut self, program: &mut ProgramAST) -> Result<(), SemanticError> {
         // 1. Init Global Scope
         // Identifier program terlebih dahulu supaya masuk ke level 0
-        self.symbol_table.enter(program.name.clone(), ObjectKind::Program, TYP_NOTYPE, 0);
+        self.symbol_table.enter(program.name.clone(), ObjectKind::Program, TYP_NOTYPE, 0, true);
         self.symbol_table.enter_scope();
         
         // 2. Masukkan identifier program ke tabel
@@ -59,13 +59,13 @@ impl SemanticAnalyzer {
                 let type_kind = self.visit_expr(value)?;
                 let type_idx = self.kind_to_typ_idx(&type_kind);
                 // 2. Masukkan ke tabel
-                self.symbol_table.enter(name.clone(), ObjectKind::Constant, type_idx, 0);
+                self.symbol_table.enter(name.clone(), ObjectKind::Constant, type_idx, 0, true);
                 Ok(())
             },
             Decl::Type { name, wrapped_type, .. } => {
                 let type_idx = self.kind_to_typ_idx(wrapped_type);
                 // 1. Masukkan ke tabel sebagai Type Alias
-                self.symbol_table.enter(name.clone(), ObjectKind::Type, type_idx, 0);
+                self.symbol_table.enter(name.clone(), ObjectKind::Type, type_idx, 0, true);
                 Ok(())
             },
             Decl::Variable { name, type_kind, line, column } => {
@@ -80,13 +80,13 @@ impl SemanticAnalyzer {
                 // 2. Loop vector 'name' dan masukkan ke tabel
                 let type_idx = self.kind_to_typ_idx(type_kind);
                 for var_name in name {
-                    self.symbol_table.enter(var_name.clone(), ObjectKind::Variable, type_idx.clone(), 0);
+                    self.symbol_table.enter(var_name.clone(), ObjectKind::Variable, type_idx.clone(), 0, true);
                 }
                 Ok(())
             },
             Decl::Procedure { name, params, local_decls, body, line: _, column: _ } => {
                 // 1. Masukkan nama prosedur ke tabel parent
-                self.symbol_table.enter(name.clone(), ObjectKind::Procedure, TYP_NOTYPE, 0);
+                self.symbol_table.enter(name.clone(), ObjectKind::Procedure, TYP_NOTYPE, 0, true);
 
                 // 2. Naik level (Scope Baru)
                 self.symbol_table.enter_scope();
@@ -112,7 +112,7 @@ impl SemanticAnalyzer {
             Decl::Function { name, params, return_type, local_decls, body, line: _, column: _ } => {
                 // 1. Masukkan nama fungsi ke tabel parent
                 let ret_idx = self.kind_to_typ_idx(return_type);
-                self.symbol_table.enter(name.clone(), ObjectKind::Function, ret_idx, 0);
+                self.symbol_table.enter(name.clone(), ObjectKind::Function, ret_idx, 0, true);
 
                 // 2. Naik level (Scope Baru)
                 self.symbol_table.enter_scope();
@@ -123,7 +123,7 @@ impl SemanticAnalyzer {
                 }
 
                 // Masukkan nama fungsi sebagai variabel lokal untuk return value assignment
-                self.symbol_table.enter(name.clone(), ObjectKind::Variable, ret_idx, 0);
+                self.symbol_table.enter(name.clone(), ObjectKind::Variable, ret_idx, 0, true);
 
                 // 4. Visit local_decls & body
                 self.visit_decls(local_decls)?;
@@ -139,9 +139,17 @@ impl SemanticAnalyzer {
     fn visit_param(&mut self, param: &Param) -> Result<(), SemanticError> {
         let type_idx = self.kind_to_typ_idx(&param.type_kind);
 
+        let is_normal = !param.is_var;
+
         for param_name in &param.names {
             // Masukkan parameter sebagai variabel lokal
-            self.symbol_table.enter(param_name.clone(), ObjectKind::Variable, type_idx.clone(), 0);
+            self.symbol_table.enter(
+                param_name.clone(), 
+                ObjectKind::Variable, 
+                type_idx.clone(), 
+                0, 
+                is_normal
+            );
         }
         Ok(())
     }
@@ -607,7 +615,7 @@ impl SemanticAnalyzer {
                 let atab_idx = self.symbol_table.make_array(idx_typ, el_idx, 0, low, high, el_size);
                 
                 // ref_idx -> atab_idx + 1
-                let type_idx = self.symbol_table.enter("".to_string(), ObjectKind::Type, TYP_NOTYPE, 0); 
+                let type_idx = self.symbol_table.enter("".to_string(), ObjectKind::Type, TYP_NOTYPE, 0, true); 
                 
                 let total_size = self.symbol_table.atab[atab_idx].size;
                 let last = self.symbol_table.tab.len() - 1;

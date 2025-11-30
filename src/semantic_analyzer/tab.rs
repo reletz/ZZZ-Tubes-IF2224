@@ -154,7 +154,7 @@ impl SymbolTable {
     }
 
     /// Memasukkan identifier baru ke tabel 'tab'
-    pub fn enter(&mut self, name: String, obj: ObjectKind, typ: usize, adr: usize) -> usize {
+    pub fn enter(&mut self, name: String, obj: ObjectKind, typ: usize, adr: usize, normal: bool) -> usize {
         // 1. Ambil indeks blok aktif saat ini dari display
         let current_btab_idx = self.display[self.level];
         // 2. Ambil 'last' identifier dari blok tersebut (untuk linked list)
@@ -167,7 +167,7 @@ impl SymbolTable {
             obj,
             typ,
             ref_idx: 0,    // Default 0, diupdate manual nanti jika perlu (misal array/proc)
-            normal: true,  // Default true, diubah nanti jika parameter 'var'
+            normal,
             level: self.level,
             adr,
         };
