@@ -10,6 +10,7 @@ use lexer::lexer::PascalLexer;
 use parser::parser::PascalParser;
 
 use semantic_analyzer::ast::ast_builder::ASTBuilder;
+use semantic_analyzer::ast::ast_printer::ASTPrinter;
 use semantic_analyzer::analyzer::SemanticAnalyzer;
 
 fn main() {
@@ -52,12 +53,9 @@ fn main() {
         }
     };
 
-    // pass ast_tree ke Semantic Analyzer
-    println!(">> Membangun Abstract Syntax Tree (AST)...");
     let mut ast = match ASTBuilder::build(&parse_tree) {
         Ok(ast) => {
             println!(">> AST Berhasil dibangun.");
-            println!("{:#?}", ast);
             ast
         },
         Err(e) => {
@@ -75,6 +73,9 @@ fn main() {
             
             println!(">> Symbol Table State:");
             analyzer.print_tables();
+
+            println!(">> Decorated AST:");
+            ASTPrinter::print(&ast);
         },
         Err(e) => {
             eprintln!(">> Semantic Error: {}", e);

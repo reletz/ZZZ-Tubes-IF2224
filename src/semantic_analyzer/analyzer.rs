@@ -85,51 +85,49 @@ impl SemanticAnalyzer {
                 Ok(())
             },
             Decl::Procedure { name, params, local_decls, body, line: _, column: _ } => {
-                // 1. Masukkan nama prosedur ke tabel parent
-                self.symbol_table.enter(name.clone(), ObjectKind::Procedure, TYP_NOTYPE, 0);
-
-                // 2. Naik level (Scope Baru)
+                let proc_idx = self.symbol_table.enter(name.clone(), ObjectKind::Procedure, TYP_NOTYPE, 0);
                 self.symbol_table.enter_scope();
+                // Update ref_idx prosedur di parent agar menunjuk ke Block ini!
+                let new_block_idx = self.symbol_table.display[self.symbol_table.level];
+                self.symbol_table.tab[proc_idx].ref_idx = new_block_idx;
 
-                // 3. Visit parameters
                 for param in params {
                     self.visit_param(param)?;
                 }
 
-                // Ambil identifier terakhir yang baru saja dimasukkan
                 let current_btab_idx = self.symbol_table.display[self.symbol_table.level];
                 let last_param_idx = self.symbol_table.btab[current_btab_idx].last;
                 self.symbol_table.btab[current_btab_idx].lpar = last_param_idx;
                 
-                // 4. Visit local_decls & body
                 self.visit_decls(local_decls)?;
                 self.visit_block(body)?;
 
-                // 6. Exit Scope
                 self.symbol_table.exit_scope();
                 Ok(())
             },
             Decl::Function { name, params, return_type, local_decls, body, line: _, column: _ } => {
-                // 1. Masukkan nama fungsi ke tabel parent
                 let ret_idx = self.kind_to_typ_idx(return_type);
-                self.symbol_table.enter(name.clone(), ObjectKind::Function, ret_idx, 0);
+                let func_idx = self.symbol_table.enter(name.clone(), ObjectKind::Function, ret_idx, 0);
 
-                // 2. Naik level (Scope Baru)
                 self.symbol_table.enter_scope();
 
-                // 3. Visit parameters
+                // Link Function Symbol -> Function Block
+                let new_block_idx = self.symbol_table.display[self.symbol_table.level];
+                self.symbol_table.tab[func_idx].ref_idx = new_block_idx;
+
                 for param in params {
                     self.visit_param(param)?;
                 }
 
-                // Masukkan nama fungsi sebagai variabel lokal untuk return value assignment
+                let current_btab_idx = self.symbol_table.display[self.symbol_table.level];
+                let last_param_idx = self.symbol_table.btab[current_btab_idx].last;
+                self.symbol_table.btab[current_btab_idx].lpar = last_param_idx;
+
                 self.symbol_table.enter(name.clone(), ObjectKind::Variable, ret_idx, 0);
 
-                // 4. Visit local_decls & body
                 self.visit_decls(local_decls)?;
                 self.visit_block(body)?;
 
-                // 6. Exit Scope
                 self.symbol_table.exit_scope();
                 Ok(())
             }
