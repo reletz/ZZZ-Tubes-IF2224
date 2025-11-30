@@ -57,7 +57,7 @@ fn main() {
     let mut ast = match ASTBuilder::build(&parse_tree) {
         Ok(ast) => {
             println!(">> AST Berhasil dibangun.");
-            // println!("{:#?}", ast);
+            println!("{:#?}", ast);
             ast
         },
         Err(e) => {
@@ -73,7 +73,6 @@ fn main() {
         Ok(_) => {
             println!(">> Analisis Semantik BERHASIL!");
             
-            // Opsional: Print Symbol Table untuk membuktikan kebenaran
             println!(">> Symbol Table State:");
             analyzer.print_tables();
         },
