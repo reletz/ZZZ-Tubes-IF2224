@@ -503,8 +503,12 @@ impl SemanticAnalyzer {
             ExprKind::ArrayAccess { array, index } => {
                 let array_type = self.visit_expr(array)?;
                 match array_type {
-                    TypeKind::Array { element_type, .. } => {
+                    TypeKind::Array { index_range, element_type } => {
                         let index_type = self.visit_expr(index)?;
+
+                        if let Err(e) = self.check_array_bounds(&index_range, index) {
+                            return Err(e);
+                        }
                         
                         match index_type {
                             // Tipe ordinal dasar yang valid langsung
@@ -571,6 +575,60 @@ impl SemanticAnalyzer {
         } else {
             TypeKind::Void
         }
+    }
+
+    /// Helper: Cek apakah static index berada dalam rentang array
+    fn check_array_bounds(&self, index_range: &TypeKind, index_expr: &Expr) -> Result<(), SemanticError> {
+        let (low, high) = match index_range {
+            // Kasus 1: Subrange (misal: 1..10, 'a'..'z')
+            TypeKind::Subrange(start, end) => (
+                self.eval_const_expr(start).unwrap_or(i32::MIN),
+                self.eval_const_expr(end).unwrap_or(i32::MAX)
+            ),
+            TypeKind::Boolean => (0, 1),
+            TypeKind::Char => (0, 255),
+            
+            TypeKind::Custom(name) => {
+                if let Some(idx) = self.symbol_table.find(name) {
+                    let entry = &self.symbol_table.tab[idx];
+                    if entry.obj == ObjectKind::Type {
+                        if entry.typ == TYP_BOOL {
+                            (0, 1)
+                        } else if entry.typ == TYP_INT || entry.typ == TYP_CHAR {
+                            let (l, h) = Self::unpack_bounds(entry.adr);
+                            
+                            if h >= l {
+                                // Valid Subrange (misal 1..5)
+                                (l, h)
+                            } else {
+                                if entry.typ == TYP_CHAR { (0, 255) } else { (i32::MIN, i32::MAX) }
+                            }
+                        } else {
+                            (i32::MIN, i32::MAX)
+                        }
+                    } else {
+                        // Bukan Type
+                        (i32::MIN, i32::MAX)
+                    }
+                } else {
+                    // Type not found
+                    (i32::MIN, i32::MAX) 
+                }
+            },
+            
+            // Fallback
+            _ => (i32::MIN, i32::MAX),
+        };
+
+        // Evaluasi nilai index yang dipakai user
+        if let Some(val) = self.eval_const_expr(index_expr) {
+             if val < low || val > high {
+                 return Err(SemanticError::new(
+                     SemanticErrorKind::IndexOutOfBounds { index: val, low, high },
+                     index_expr.line, index_expr.column
+                 ));
+             }
+        } Ok(())
     }
 
     // ==========================================
@@ -906,11 +964,23 @@ impl SemanticAnalyzer {
                 ));
             }
 
-            if !param_entry.normal && arg_expr.annotation.tab_index.is_none() {
-                 return Err(SemanticError::new(
-                     SemanticErrorKind::GenericError(format!("Argument {} must be a variable", i+1)),
-                     arg_expr.line, arg_expr.column
-                ));
+            if !param_entry.normal {
+                // Harus punya tab_index (berarti bukan literal/expression)
+                if let Some(idx) = arg_expr.annotation.tab_index {
+                    // Makesure yang di-pass adalah VARIABLE, bukan CONSTANT
+                    let arg_obj = self.symbol_table.tab[idx].obj;
+                    if arg_obj == ObjectKind::Constant {
+                        return Err(SemanticError::new(
+                            SemanticErrorKind::GenericError(format!("Argument {} is a Constant, cannot be passed to 'var' parameter", i+1)),
+                            arg_expr.line, arg_expr.column
+                        ));
+                    }
+                } else {
+                    return Err(SemanticError::new(
+                        SemanticErrorKind::GenericError(format!("Argument {} must be a variable", i+1)),
+                        arg_expr.line, arg_expr.column
+                    ));
+                }
             }
         }
         Ok(())
@@ -1079,6 +1149,7 @@ impl SemanticAnalyzer {
         match &expr.kind {
             ExprKind::LiteralInt(val) => Some(*val),
             ExprKind::LiteralChar(c) => Some(*c as i32),
+            ExprKind::LiteralBool(b) => Some(if *b { 1 } else { 0 }),
             ExprKind::Unary { op: UnOp::Neg, operand } => {
                 self.eval_const_expr(operand).map(|v| -v)
             },

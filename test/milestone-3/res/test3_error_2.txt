@@ -1,0 +1,2 @@
+>> Parsing Berhasil!
+>> AST Berhasil dibangun.
