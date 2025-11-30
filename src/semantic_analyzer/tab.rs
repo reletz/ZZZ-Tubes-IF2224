@@ -275,15 +275,13 @@ impl SymbolTable {
                     // Constants: show signed value
                     format!("{}", entry.adr as u32 as i32)
                 },
-                ObjectKind::Type if entry.ref_idx == 0 && (entry.typ == TYP_INT || entry.typ == TYP_CHAR) => {
+                ObjectKind::Type if entry.ref_idx == 0 
+                     && (entry.typ == TYP_INT || entry.typ == TYP_CHAR) 
+                     && entry.adr > 1 => {
                     // Subrange type: unpack and show bounds
                     let low = (entry.adr & 0xFFFF) as u16 as i16 as i32;
                     let high = ((entry.adr >> 16) & 0xFFFF) as u16 as i16 as i32;
-                    if entry.adr != 0 {
-                        format!("{}..{}", low, high)
-                    } else {
-                        "0".to_string()
-                    }
+                    format!("{}..{}", low, high)
                 },
                 _ => {
                     // Everything else: show as-is
